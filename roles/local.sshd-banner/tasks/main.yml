@@ -1,0 +1,11 @@
+---
+- name: sshd_banner
+  template:
+    src: "{{ banner_template }}"
+    dest: "{{ banner_location }}"
+    owner: root
+    group: root
+    mode: 0644
+  tags: 
+    - ssh
+    - sshd_banner

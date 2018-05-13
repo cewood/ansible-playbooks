@@ -1,0 +1,59 @@
+# -*- shell-script -*-
+#
+#  Configuration file for ferm(1).
+#
+
+table filter {
+    chain INPUT {
+        policy DROP;
+
+        # connection tracking
+        mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+
+        # allow local packet
+        interface lo ACCEPT;
+
+        # respond to ping
+        proto icmp ACCEPT; 
+
+        # allow IPsec
+        proto udp dport 500 ACCEPT;
+        proto (esp ah) ACCEPT;
+
+        # allow SSH connections
+        proto tcp dport ssh jump SSH;
+    }
+    chain SSH {
+        # connection tracking
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+        mod recent name sshbf rttl rcheck hitcount 5 seconds 300 DROP;
+        mod recent name sshbf rttl rcheck hitcount 4 seconds 1800 DROP;
+        mod recent name sshbf set ACCEPT;
+    }
+    chain OUTPUT {
+        policy ACCEPT;
+
+        # connection tracking
+        #mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+    }
+    chain FORWARD {
+        policy DROP;
+
+        # connection tracking
+        mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+    }
+}
+
+# IPv6:
+#domain ip6 {
+#    table filter {
+#        chain INPUT {
+#            policy ACCEPT;
+#            # ...
+#        }
+#        # ...
+#    }
+#}

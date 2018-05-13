@@ -1,0 +1,17 @@
+---
+- name: ssh authorized key entry
+  authorized_key:
+    user: cewood
+    state: present
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQD51kiukRzSTnwqEhhn7h+y0iBRRnXHMvErppCdL8uiqK5/PkSDWf5l48Nq7gTjk2TRlAh4OJvw0qXRsBOhRRK48iydKvs7k91AsYd/0LmgbSUrQqAVT5ZkKgqkaXnKJuVYBnO0BepxndW2AxMllQyOeFDSLqBlJCpBaYoiB/r/CNFmT1YYPgAevJ03FFKUYmslDwcftrNf6ePHlW+OnWkZUgpMtXhssvASRP1tpx6KUXAnZUDo8mZHt4SoXy8pwaWJ1p3cgzcSRm5qa7fQuTsG1+6FNh7e5MufQvmmmE06ivOnuW0WhDijKcVOrbxiE0C4pTIu5ZvZAh2QAKG78iMgsuJoWoKnkJaxJT13c4K9Ke1oSaHnO1PjVUHYgZmexSxDw3BATlFzrXU+AIkoHvvIuzghq9UTiPxQdt2G0HONZQf+fv7cz8MHzpZUp+vNGNgqo4f/lryeb4XzDhkXm9bI4UzEfXAolw6QtiHnfbQqnq0pDzZlzJtR7QDp9kZEoz7Vb1PJ/K4hKqaBYtFoyuJ5ycd/rtmK2qrdxjiHn1ST7pgvjhTnFudFa5G7N15zd2KFwq3qZ8QncBhhHSnSaDvWGFoX+9h8UTrSdlK/bpgE053dFZx4gKWv12mBr2fQMx+F/r11p1RywS+opevG40P/7GL3SeJ/Iso/oTq5YhNgMQ== cewood@feynman.bridge.middlearth.lan"
+  tags:
+    - ssh
+    - authorized_keys
+- name: ssh authorized key entry
+  authorized_key:
+    user: cewood
+    state: present
+    key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCx1VJUemmRcDxU+xQiM0bR/xhz81M/shTAPYj169nlbRV4vLzeaxPMe+w+XICLzGzREQoXaWAF3Ru4k6enYm3utRNFIgT6dc188xC7pzLVksWFCQpdzute77EuGj+oxzL3yeYYVV5HZg7d1S1Q0736g0VxWKj4oZNRN15oBbtxHAwJU0ETop6WU5tj6nvloUWyZzPn8JZxuN786g2ANOTSjkHO61BiVsSUOVYU0ko7okLDNMhH/kOI7ULuH5OWzvRpt+7sdpjLmdt2lc6nQ5nRH9ZRx6+0A0AXzfgxz0fpSWzYziD0Imk2ze7UDdHYX5NFE9XKeGXbYYSqQeDkWsiunsh4139IpRdEWiSvJKLYmg0QiJ3j8JtLgmjPvuTWZvDtaRXxagEZ6qLSdvkuq8SsaW5cppNrf74cQ3W6431RPRP0kDRXx6cz4djDnl2pv0ZjQ2FKa6puHyqgHC0DWz09ut2keQC3o4qHYCRC34234xhriiKow9xTeGez0xz2qbvoiVBTKp3iOl1nxbVtUo/cd0bVkHeVzdogP4D3Bv1SsJR+8FHUmCwjdfEldghPpYeAf9TaTN0smIuu1qqz7dF1hNn7TcRIh/u6G1D7GK6impQp3ni+2K/J4pApi6L7q6W3qdCOKPM4ulaAgV+rJUt+Md+sGFRs+DXa8H1YZ6tYqw== bootstrapper@engineroom.middlearth.lan"
+  tags:
+    - ssh
+    - authorized_keys

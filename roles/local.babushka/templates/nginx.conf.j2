@@ -1,0 +1,21 @@
+events {
+  worker_connections 1024;
+}
+
+http {
+  server {
+    listen 80;
+
+    server_name localhost {{ nginx_proxy_server_name }};
+
+    location /sickrage/calendar {
+      proxy_pass http://192.168.1.2:8081/calendar;
+    }
+
+    location /radarr/calendar {
+      add_header Content-Type text/plain;
+
+      proxy_pass http://babushka.engineroom.middlearth.lan:7878/feed/calendar/Radarr.ics?apikey={{ radarr_apikey }};
+    }
+  }
+}

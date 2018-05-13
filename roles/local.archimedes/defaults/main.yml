@@ -1,0 +1,10 @@
+---
+# defaults file for archimedes
+openvpn_ca_cert: "{{ vault_openvpn_ca_cert | trim }}"
+openvpn_cert: "{{ vault_openvpn_cert | trim }}"
+openvpn_dh_params: "{{ vault_openvpn_dh_params | trim }}"
+openvpn_key: "{{ vault_openvpn_key | trim }}"
+openvpn_push_directives: "{{ vault_openvpn_push_directives | trim }}"
+openvpn_remote_directive: "{{ vault_openvpn_remote_directive | trim }}"
+openvpn_tls_auth: "{{ vault_openvpn_tls_auth | trim }}"
+openvpn_verbosity: 3

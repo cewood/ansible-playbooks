@@ -1,0 +1,4 @@
+---
+# defaults file for sshd-banner
+banner_location: /etc/ssh/banner.txt
+banner_template: "templates/sshd_banner.j2"

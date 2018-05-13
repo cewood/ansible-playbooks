@@ -1,0 +1,62 @@
+---
+# tasks file for archimedes
+- name: "create cewood group"
+  group:
+    name: cewood
+    state: present
+  tags:
+    - group
+    - cewood
+    - pre_tasks
+
+- name: "create cewood user"
+  user:
+    name: cewood
+    shell: /bin/bash
+    group: cewood
+    groups: adm,audio,cdrom,dialout,gpio,i2c,input,netdev,plugdev,spi,sudo,users,video
+    append: yes
+  tags:
+    - user
+    - cewood
+    - pre_tasks
+
+- name: "install packages"
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - ferm
+    - htop
+    - openvpn
+    - strace
+    - tmux
+  tags:
+    - packages
+    - post_tasks
+
+- name: "ferm.conf"
+  template:
+    src: templates/ferm.conf.j2
+    dest: /etc/ferm/ferm.conf
+    owner: root
+    group: root
+    mode: 0644
+    validate: 'ferm -l %s'
+  tags:
+    - ferm
+    - iptables
+
+- name: "openvpn configs"
+  template:
+    src: "templates/openvpn-{{ item }}.conf.j2"
+    dest: "/etc/openvpn/{{ item }}.conf"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - client
+    - server
+  tags:
+    - openvpn

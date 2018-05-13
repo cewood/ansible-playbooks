@@ -1,0 +1,11 @@
+---
+# Playbook for archimedes
+- hosts: archimedes
+  roles:
+    - { role: local.archimedes,
+        become: yes,
+        tags: [
+          "role",
+          "archimedes",
+        ]
+      }

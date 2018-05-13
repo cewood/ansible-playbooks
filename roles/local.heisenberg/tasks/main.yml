@@ -1,0 +1,161 @@
+---
+# tasks file for heisenberg
+- name: "Check if cower is installed"
+  command: /usr/bin/cower --version
+  register: result_cower
+  ignore_errors: True
+
+- name: "Download cower archive"
+  get_url:
+    url: https://aur.archlinux.org/cgit/aur.git/snapshot/cower.tar.gz
+    dest: /tmp/cower.tar.gz
+  when: result_cower|failed
+
+- name: "Extract cower.tar.gz into /tmp/cower"
+  unarchive:
+    src: /tmp/cower.tar.gz
+    dest: /tmp
+    creates: /usr/bin/cower
+  when: result_cower|failed
+
+- name: "Run makepkg for the cower package"
+  command: makepkg -si --skippgpcheck
+  args:
+    chdir: /tmp/cower
+    creates: /usr/bin/cower
+  when: result_cower|failed
+
+- name: "Check if pacaur is installed"
+  command: /usr/bin/pacaur --version
+  register: result_pacaur
+  ignore_errors: True
+
+- name: "Download pacaur archive"
+  get_url:
+    url: https://aur.archlinux.org/cgit/aur.git/snapshot/pacaur.tar.gz
+    dest: /tmp/pacaur.tar.gz
+  when: result_pacaur|failed
+
+- name: "Extract pacaur.tar.gz into /tmp/pacaur"
+  unarchive:
+    src: /tmp/pacaur.tar.gz
+    dest: /tmp
+    creates: /usr/bin/pacaur
+  when: result_pacaur|failed
+
+- name: "Run makepkg for the pacaur package"
+  command: makepkg -si --skippgpcheck
+  args:
+    chdir: /tmp/pacaur
+    creates: /usr/bin/pacaur
+  when: result_pacaur|failed
+
+- name: "change root's shell to /bin/zsh"
+  user:
+    name: root
+    shell: /bin/zsh
+  become: yes
+  tags: users
+
+- name: "Add the wheel group to sudoers"
+  copy:
+    content: '%wheel ALL=(ALL) ALL'
+    dest: /etc/sudoers.d/10_wheel
+    owner: root
+    group: root
+    mode: 0440
+    validate: 'visudo -cf %s'
+  become: yes
+
+- name: "Create user account"
+  user:
+    name: cewood
+    append: yes
+    groups:
+      - adm
+      - disk
+      - log
+      - lp
+      - network
+      - power
+      - storage
+      - sys
+      - wheel
+    shell: /bin/zsh
+  become: yes
+
+- name: "Install packages"
+  aur:
+    name: "{{ packages }}"
+    auronly: no
+
+- name: "Checkout oh-my-zsh"
+  git:
+    repo: "https://github.com/robbyrussell/oh-my-zsh.git"
+    dest: "/home/cewood/.oh-my-zsh"
+    update: no
+
+- name: "Checkout anyenv"
+  git:
+    repo: "https://github.com/riywo/anyenv.git"
+    dest: "/home/cewood/.anyenv"
+    update: no
+
+- name: "enable and start ntpd"
+  service:
+    name: ntpd
+    enabled: yes
+    state: started
+  become: yes
+  tags: clock
+
+- name: "Set up monitor resolution"
+  template:
+    src: templates/10-monitor.conf
+    dest: /etc/X11/xorg.conf.d/10-monitor.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  tags:
+    - tasks
+    - monitor
+    - config
+    - xorg
+
+- name: "Set up udev rules for thinkpad extra keys"
+  template:
+    src: templates/10-lenovo-x1c5-thinkpad-extra-buttons.hwdb.j2
+    dest: /etc/udev/hwdb.d/10-lenovo-x1c5-thinkpad-extra-buttons.hwdb
+    owner: root
+    group: root
+    mode: 0744
+  become: yes
+  tags:
+    - tasks
+    - keyboard
+    - config
+    - udev
+
+- name: "enable and start gdm"
+  service:
+    name: gdm
+    enabled: yes
+    state: started
+  become: yes
+  tags: gdm gnome display-manager
+
+# https://bbs.archlinux.org/viewtopic.php?pid=1519306#p1519306
+- name: "Set up polkit rule for cups"
+  template:
+    src: templates/60-cups.rules
+    dest: /etc/polkit-1/rules.d/60-cups.rules
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+  tags:
+    - tasks
+    - printing
+    - config
+    - cups

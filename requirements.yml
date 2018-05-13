@@ -1,0 +1,19 @@
+# dev-sec.ansible-ssh-hardening
+- src: https://github.com/dev-sec/ansible-ssh-hardening
+  version: 4.4.0
+  name: dev-sec.ansible-ssh-hardening
+
+# dev-sec.ansible-os-hardening
+- src: https://github.com/dev-sec/ansible-os-hardening
+  version: 4.3.0
+  name: dev-sec.ansible-os-hardening
+
+# # angstwad.docker_ubuntu
+# - src: https://github.com/angstwad/docker.ubuntu
+#   version: v3.5.0
+#   name: angstwad.docker_ubuntu
+
+# angstwad.docker_ubuntu
+- src: https://github.com/cewood/docker.ubuntu
+  version: temp_bionic_hack
+  name: angstwad.docker_ubuntu

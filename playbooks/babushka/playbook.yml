@@ -1,0 +1,11 @@
+---
+# Playbook for babushka
+- hosts: babushka
+  roles:
+    - { role: local.babushka,
+        become: yes,
+        tags: [
+          "role",
+          "babushka",
+        ]
+      }

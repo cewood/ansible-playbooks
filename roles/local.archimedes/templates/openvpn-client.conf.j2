@@ -1,0 +1,29 @@
+client
+nobind
+dev tun
+remote-cert-tls server
+
+{{ openvpn_remote_directive }}
+
+<ca>
+{{ openvpn_ca_cert }}
+</ca>
+
+<cert>
+##### YOUR PUBLIC KEY CONTENTS GOES HERE #####
+</cert>
+
+<key>
+##### YOUR PRIVATE KEY CONTENTS GOES HERE #####
+</key>
+
+<tls-auth>
+{{ openvpn_tls_auth }}
+</tls-auth>
+
+key-direction 1
+
+script-security 2
+
+up /etc/openvpn/client.up
+down /etc/openvpn/client.down

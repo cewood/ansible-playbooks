@@ -1,0 +1,91 @@
+# -*- shell-script -*-
+#
+#  Configuration file for ferm(1).
+#
+
+table filter {
+    # External/non-ferm chains to preserve
+    chain (DOCKER DOCKER-USER DOCKER-ISOLATION-STAGE-1 DOCKER-ISOLATION-STAGE-2) @preserve;
+
+    chain INPUT {
+        policy DROP;
+
+        # connection tracking
+        mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+
+        # allow local packet
+        interface lo ACCEPT;
+
+        # respond to ping
+        proto icmp ACCEPT; 
+
+        # allow IPsec
+        proto udp dport 500 ACCEPT;
+        proto (esp ah) ACCEPT;
+
+        # allow samba connections
+        proto udp dport 137:138 ACCEPT;
+        proto tcp dport (139 445) ACCEPT;
+
+        # allow syncthing ports
+        proto tcp dport (8384 22000) ACCEPT;
+        proto udp dport 21027 ACCEPT;
+
+        # allow plex ports
+        proto tcp dport (3005 8324 32400 32469) ACCEPT;
+        proto udp dport (1900 5353 8324 32400 32410:32414) ACCEPT;
+
+        # allow transmission/openvpn ports
+        proto tcp dport (9091) ACCEPT;
+
+        # allow sickrage ports
+        proto tcp dport (8081) ACCEPT;
+
+        # allow sonarr ports
+        proto tcp dport (8989) ACCEPT;
+
+        # allow radarr ports
+        proto tcp dport (7878) ACCEPT;
+
+        # allow couchpotato ports
+        proto tcp dport (5050) ACCEPT;
+
+        # allow smtp ports
+        proto tcp dport (25) ACCEPT;
+
+        # allow SSH connections
+        proto tcp dport ssh ACCEPT;
+    }
+    chain OUTPUT {
+        policy DROP;
+
+        # allow local packet
+        outerface lo ACCEPT;
+
+        # connection tracking
+        #mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+    }
+    chain FORWARD {
+        policy ACCEPT;
+
+        interface docker0 outerface {{ ansible_default_ipv4.interface }} ACCEPT;
+        interface {{ ansible_default_ipv4.interface }} outerface docker0 ACCEPT;
+
+        # connection tracking
+        mod state state INVALID DROP;
+        mod state state (ESTABLISHED RELATED) ACCEPT;
+    }
+}
+
+# IPv6:
+#domain ip6 {
+#    table filter {
+#        chain INPUT {
+#            policy ACCEPT;
+#            # ...
+#        }
+#        # ...
+#    }
+#}

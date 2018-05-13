@@ -1,0 +1,275 @@
+version: "3.1"
+volumes:
+  nginx-conf:
+  nginx-html:
+  nginx-ssl-certs:
+  nginx-vhostd:
+
+
+services:
+  smtp:
+    image: namshi/smtp
+    container_name: smtp
+    restart: always
+    ports:
+      - "25:25"
+
+
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+    volumes:
+      - "nginx-conf:/etc/nginx/conf.d"
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs:ro"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+
+
+  docker-gen:
+    image: jwilder/docker-gen
+    container_name: docker-gen
+    restart: always
+    depends_on:
+      - nginx-proxy
+    command:
+      - -notify-sighup
+      - nginx-proxy
+      - -watch
+      - -wait
+      - 5s:30s
+      - /etc/docker-gen/templates/nginx.tmpl
+      - /etc/nginx/conf.d/default.conf
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen
+    volumes:
+      - "nginx-conf:/etc/nginx/conf.d"
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs:ro"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "./nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro"
+
+
+  nginx-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-letsencrypt
+    restart: always
+    depends_on:
+      - docker-gen
+    volumes:
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+
+  nginx-public:
+    image: nginx:alpine
+    container_name: nginx-public
+    restart: always
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+    environment:
+      - "VIRTUAL_HOST=${VIRTUAL_HOST}"
+      - "LETSENCRYPT_HOST=${LETSENCRYPT_HOST}"
+      - "LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}"
+
+
+  samba:
+    image: dperson/samba:latest
+    container_name: samba
+    restart: always
+    entrypoint:
+      - samba.sh
+      # -u
+      # - "<username;password>[;id;group-id/group-name]"
+      - -u
+      - "${SAMBA_USER1}"
+      - -u
+      - "${SAMBA_USER2}"
+      # -s
+      # - "<name;/path>[;browse;readonly;guest;users;admins;wl]"
+      - -s
+      - "storage;/storage;yes;yes;no;all;cewood;cewood"
+      - -s
+      - "backup;/backup;yes;yes;no;all;cewood;cewood"
+    environment:
+      - "NMBD=true"
+      - "WORKGROUP=middlearth"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "139:139"
+      - "445:445"
+      - "137:137/udp"
+      - "138:138/udp"
+    volumes:
+      - "/mnt/backup1:/backup"
+      - "/mnt/storage:/storage"
+
+
+  syncthing:
+    image: linuxserver/syncthing:47
+    container_name: syncthing
+    restart: always
+    network_mode: host
+    environment:
+      - "TZ=Europe/Berlin"
+      - "PUID=1000"
+      - "PGID=1000"
+    ports:
+      - "8384:8384"
+      - "21027:21027/udp"
+      - "22000:22000"
+    volumes:
+      - "/mnt/storage/containers/syncthing/config:/config"
+      - "/mnt/storage/containers/syncthing/data/self:/sync/self"
+      - "/mnt/storage/containers/syncthing/data:/sync"
+
+
+  plex:
+    image: wernight/plex-media-server:latest
+    container_name: plex
+    restart: always
+    #network_mode: host
+    environment:
+      - "PLEX_LOGIN=${PLEX_LOGIN}"
+      - "PLEX_PASSWORD=${PLEX_PASSWORD}"
+      #- "X_PLEX_TOKEN=MY_X_PLEX_TOKEN"
+    ports:
+      # for access to the Plex Media Server [required]
+      - "32400:32400"
+      # for access to the Plex DLNA Server
+      - "1900:1900/udp"
+      - "32469:32469"
+      # for controlling Plex Home Theater via Plex Companion
+      - "3005:3005"
+      # for older Bonjour/Avahi network discovery
+      - "5353:5353/udp"
+      # for controlling Plex for Roku via Plex Companion
+      - "8324:8324"
+      # for current GDM network discovery
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+    volumes:
+      - "/mnt/storage/containers/plex/config:/config"
+      - "/mnt/storage/media/videos/tv:/tv"
+      - "/mnt/storage/media/videos/misc:/misc"
+      - "/mnt/storage/media/videos/movies:/movies"
+
+
+  transmission:
+    image: haugene/transmission-openvpn
+    container_name: transmission
+    restart: always
+    privileged: true
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "OPENVPN_PROVIDER=${OPENVPN_PROVIDER}"
+      - "OPENVPN_CONFIG=${OPENVPN_CONFIG}"
+      - "OPENVPN_USERNAME=${OPENVPN_USERNAME}"
+      - "OPENVPN_PASSWORD=${OPENVPN_PASSWORD}"
+      - "OPENVPN_OPTS=--replay-window 64 30 --mute-replay-warnings --inactive 3600 --ping 10 --ping-exit 60 --pull-filter ignore ping"
+      - "LOCAL_NETWORK=192.168.0.0/23"
+      - "TRANSMISSION_RATIO_LIMIT_ENABLED=true"
+      - "TRANSMISSION_RATIO_LIMIT=1.5"
+    ports:
+      - "9091:9091"
+    volumes:
+      - "/mnt/storage/containers/transmission/data:/data"
+      - "/mnt/storage/media/videos/movies:/movies"
+      - "/mnt/storage/media/videos/misc:/misc"
+      - "/mnt/storage/media/videos/tv:/tv"
+      - "/etc/localtime:/etc/localtime:ro"
+
+
+  sickrage:
+    image: linuxserver/sickrage
+    container_name: sickrage
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "8081:8081"
+    volumes:
+      - "/mnt/storage/containers/sickrage/config:/config"
+      - "/mnt/storage/containers/sickrage/downloads:/downloads"
+      - "/mnt/storage/media/videos/tv:/tv"
+
+
+  couchpotato:
+    image: linuxserver/couchpotato
+    container_name: couchpotato
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "5050:5050"
+    volumes:
+      - "/mnt/storage/containers/couchpotato/config:/config"
+      - "/mnt/storage/containers/couchpotato/downloads:/downloads"
+      - "/mnt/storage/media/videos/movies:/movies"
+
+
+  calibre-web:
+    image: linuxserver/calibre-web
+    container_name: calibre-web
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "8083:8083"
+    volumes:
+      - "/mnt/storage/containers/calibre-web/config:/config"
+      - "/mnt/storage/documents/ebooks/calibre-library:/books:ro"
+
+
+  lazylibrarian:
+    image: linuxserver/lazylibrarian
+    container_name: lazylibrarian
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "5299:5299"
+    volumes:
+      - "/mnt/storage/containers/calibre-web/config:/config"
+      - "/mnt/storage/containers/calibre-web/downloads:/downloads"
+      - "/mnt/storage/documents/ebooks/calibre-library:/books"
+
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "7878:7878"
+    volumes:
+      - "/mnt/storage/containers/radarr/config:/config"
+      - "/mnt/storage/containers/radarr/downloads:/downloads"
+      - "/mnt/storage/media/videos/movies:/movies"
+      - "/etc/localtime:/etc/localtime:ro"
+

@@ -1,0 +1,11 @@
+---
+# Playbook for heisenberg
+- hosts: heisenberg
+  roles:
+    - { role: local.heisenberg,
+        become: yes,
+        tags: [
+          "role",
+          "heisenberg",
+        ]
+      }

@@ -1,0 +1,40 @@
+server 192.168.255.0 255.255.255.0     
+verb {{ openvpn_verbosity }}
+
+<ca>
+{{ openvpn_ca_cert }}
+</ca>
+
+<cert>
+{{ openvpn_cert }}
+</cert>
+
+<key>
+{{ openvpn_key }}
+</key>
+
+<tls-auth>
+{{ openvpn_tls_auth }}
+</tls-auth>
+
+key-direction 0
+
+<dh>
+{{ openvpn_dh_params }}
+</dh>
+
+keepalive 10 60
+persist-key
+persist-tun
+
+proto udp
+port 1194
+dev tun0
+status /var/log/openvpn-status.log                                                                           
+
+topology subnet
+
+user nobody
+group nogroup
+
+{{ openvpn_push_directives }}

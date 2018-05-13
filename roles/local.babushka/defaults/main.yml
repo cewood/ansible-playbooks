@@ -1,0 +1,52 @@
+---
+# defaults file for babushka
+mounts:
+  - source: UUID=0cb445cc-92cb-4d6c-b6f0-62b334486315
+    path: /mnt/storage
+    opts: noauto,x-systemd.automount,x-systemd.device-timeout=30
+  - source: UUID=1986aad1-e95c-4c1c-af3e-019703260e1b
+    path: /mnt/backup
+    opts: noauto,x-systemd.automount,x-systemd.device-timeout=30,x-systemd.idle-timeout=1800
+  - source: UUID=da2628f8-79c6-417a-8e90-861108b60c61
+    path: /mnt/backup2
+    opts: noauto,x-systemd.automount,x-systemd.device-timeout=30,x-systemd.idle-timeout=1800
+services:
+  - name: rsnapshot-sync
+    description: Rsnapshot-sync
+    dependencies:
+      - Require=rsnapshot-weekly.service
+      - After=rsnapshot-weekly.service
+    calendar: "*-*-* 00:00:00"
+    command: /root/rsnapprereq sync /proc/stat /var/run/rsnapshot-target-sync
+  - name: rsnapshot-daily
+    description: Rsnapshot-daily
+    dependencies:
+      - Require=rsnapshot-sync
+      - After=rsnapshot-sync.service
+    calendar: "*-*-* 00:00:00"
+    command: /root/rsnapprereq daily /var/run/rsnapshot-target-sync /var/run/rsnapshot-target-daily
+  - name: rsnapshot-weekly
+    description: Rsnapshot-weekly
+    dependencies:
+      - Require=rsnapshot-monthly.service
+      - After=rsnapshot-monthly.service
+    calendar: "Sun *-*-* 00:00:00"
+    command: /root/rsnapprereq weekly /var/run/rsnapshot-target-daily /var/run/rsnapshot-target-weekly
+  - name: rsnapshot-monthly
+    description: Rsnapshot-monthly
+    calendar: "*-*-01 00:00:00"
+    command: /root/rsnapprereq monthly /var/run/rsnapshot-target-weekly /var/run/rsnapshot-target-monthly
+compose_project_name: "babuskha"
+letsencrypt_email: "{{ vault_letsencrypt_email | trim }}"
+letsencrypt_host: "{{ vault_letsencrypt_host | trim }}"
+nginx_proxy_server_name: "{{ vault_nginx_proxy_server_name | trim }}"
+openvpn_config: "{{ vault_openvpn_config | trim }}"
+openvpn_password: "{{ vault_openvpn_password | trim }}"
+openvpn_provider: "{{ vault_openvpn_provider | trim }}"
+openvpn_username: "{{ vault_openvpn_username | trim }}"
+plex_login: "{{ vault_plex_login | trim }}"
+plex_password: "{{ vault_plex_password | trim }}"
+radarr_apikey: "{{ vault_radarr_apikey | trim }}"
+samba_user1: "{{ vault_samba_user1 | trim }}"
+samba_user2: "{{ vault_samba_user2 | trim }}"
+virtual_host: "{{ vault_virtual_host | trim }}"

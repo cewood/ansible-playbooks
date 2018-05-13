@@ -1,0 +1,128 @@
+---
+# tasks file for babushka
+- name: "install packages (main group)"
+  apt:
+    name:
+      - bmon
+      - collectl
+      - ferm
+      - htop
+      - iftop
+      - iotop
+      - iptraf
+      - nethogs
+      - nmap
+      - rsnapshot
+      - strace
+      - sysstat
+      - systemtap
+    state: present
+  tags:
+    - babushka
+    - tasks
+    - system
+    - packages
+
+- name: "ferm.conf"
+  template:
+    src: templates/ferm.conf.j2
+    dest: /etc/ferm/ferm.conf
+    owner: root
+    group: root
+    mode: 0644
+    validate: "ferm --noexec --lines %s"
+  tags:
+    - babushka
+    - tasks
+    - system
+    - iptables
+    - ferm
+
+- name: "Mount storage"
+  mount:
+    name: "{{ item.path }}"
+    src: "{{ item.source }}"
+    fstype: "{{ item.type | default('ext4') }}"
+    opts: "{{ item.opts | default('defaults') }}"
+    dump: "{{ item.dump | default(0) }}"
+    passno: "{{ item.passno | default (2) }}"
+    state: present
+  with_items: "{{ mounts }}"
+  when: mounts is defined
+  tags:
+    - babushka
+    - tasks
+    - system
+    - storage
+    - mount
+
+- name: "docker-compose folder"
+  file:
+    path: /root/docker-compose
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "docker-compose .env"
+  template:
+    src: templates/docker-compose.env.j2
+    dest: /root/docker-compose/.env
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "docker-compose.yml"
+  template:
+    src: templates/docker-compose.yml.j2
+    dest: /root/docker-compose/docker-compose.yml
+    owner: root
+    group: root
+    mode: 0644
+    validate: "docker-compose -f %s config -q"
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "nginx docker-gen template"
+  file:
+    src: files/nginx.tmpl
+    dest: /root/docker-compose/nginx.tmpl
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+    - docker-gen
+    - proxy
+    - nginx
+
+- name: "nginx public proxy config"
+  template:
+    src: templates/nginx.conf.j2
+    dest: /root/docker-compose/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+    - public
+    - nginx

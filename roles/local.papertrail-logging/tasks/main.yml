@@ -1,0 +1,12 @@
+---
+- name: rsyslog papertrail config
+  template:
+    src: templates/rsyslog_papertrail.j2
+    dest: /etc/rsyslog.d/papertrail.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart rsyslog
+  tags:
+    - rsyslog
+    - papertrail
