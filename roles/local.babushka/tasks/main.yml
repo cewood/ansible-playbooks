@@ -89,7 +89,19 @@
     owner: root
     group: root
     mode: 0644
-    validate: "docker-compose -f %s config -q"
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "ssmtp.conf file"
+  template:
+    src: templates/ssmtp.conf.j2
+    dest: /root/docker-compose/ssmtp.conf
+    owner: root
+    group: root
+    mode: 0644
   tags:
     - babushka
     - tasks

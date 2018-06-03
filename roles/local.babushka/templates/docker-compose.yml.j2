@@ -140,6 +140,19 @@ services:
       - "/mnt/storage/containers/syncthing/data:/sync"
 
 
+  gmvault:
+    image: aubertg/gmvault-docker
+    container_name: gmvault
+    restart: always
+    environment:
+      - "GMVAULT_UID=1000"
+      - "GMVAULT_GID=1000"
+      - "GMVAULT_EMAIL_ADDRESS=${GMVAULT_EMAIL_ADDRESS}"
+    volumes:
+      - "/mnt/storage/containers/gmvault/data:/data"
+      - "./ssmtp.conf:/etc/ssmtp/ssmtp.conf"
+
+
   plex:
     image: wernight/plex-media-server:latest
     container_name: plex

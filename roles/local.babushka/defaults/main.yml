@@ -37,6 +37,7 @@ services:
     calendar: "*-*-01 00:00:00"
     command: /root/rsnapprereq monthly /var/run/rsnapshot-target-weekly /var/run/rsnapshot-target-monthly
 compose_project_name: "babuskha"
+gmvault_email_address: "{{ vault_gmvault_email_address | trim }}"
 letsencrypt_email: "{{ vault_letsencrypt_email | trim }}"
 letsencrypt_host: "{{ vault_letsencrypt_host | trim }}"
 nginx_proxy_server_name: "{{ vault_nginx_proxy_server_name | trim }}"
