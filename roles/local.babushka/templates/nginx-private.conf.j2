@@ -1,0 +1,37 @@
+events {
+  worker_connections 1024;
+}
+
+http {
+  server {
+    listen 80;
+    server_name localhost private.{{ domain_base }};
+  }
+
+  server {
+    listen 80;
+    server_name mikrotik.private.{{ domain_base }};
+
+    location / {
+      proxy_pass http://192.168.88.1/;
+    }
+  }
+
+  server {
+    listen 80;
+    server_name sickrage.private.{{ domain_base }};
+
+    location / {
+      proxy_pass http://sickrage:8081;
+    }
+  }
+
+  server {
+    listen 80;
+    server_name transmission.private.{{ domain_base }};
+
+    location / {
+      proxy_pass http://transmission:9091/;
+    }
+  }
+}

@@ -37,16 +37,21 @@ services:
     calendar: "*-*-01 00:00:00"
     command: /root/rsnapprereq monthly /var/run/rsnapshot-target-weekly /var/run/rsnapshot-target-monthly
 compose_project_name: "babuskha"
-gmvault_email_address: "{{ vault_gmvault_email_address | trim }}"
-letsencrypt_email: "{{ vault_letsencrypt_email | trim }}"
-letsencrypt_host: "{{ vault_letsencrypt_host | trim }}"
-nginx_proxy_server_name: "{{ vault_nginx_proxy_server_name | trim }}"
+domain_name: "{{ vault_domain_name | trim }}"
+email_address: "{{ vault_email_address | trim }}"
+#gmvault_email_address: "{{ vault_gmvault_email_address | trim }}" #todelete
+#letsencrypt_email: "{{ vault_letsencrypt_email | trim }}" #todelete
+#letsencrypt_host_public: "{{ vault_letsencrypt_host_public | trim }}" #todelete
+#nginx_server_name_public: "{{ vault_nginx_server_name_public | trim }}" #todelete
+oauth2_client_id: "{{ vault_oauth2_client_id | trim }}"
+oauth2_client_secret: "{{ vault_oauth2_client_secret | trim }}"
+oauth2_cookie_secret: "{{ vault_oauth2_cookie_secret | trim }}"
 openvpn_config: "{{ vault_openvpn_config | trim }}"
 openvpn_password: "{{ vault_openvpn_password | trim }}"
 openvpn_provider: "{{ vault_openvpn_provider | trim }}"
 openvpn_username: "{{ vault_openvpn_username | trim }}"
-plex_login: "{{ vault_plex_login | trim }}"
-plex_password: "{{ vault_plex_password | trim }}"
+#plex_login: "{{ vault_plex_login | trim }}" #todelete
+#plex_password: "{{ vault_plex_password | trim }}" #todelete
 radarr_apikey: "{{ vault_radarr_apikey | trim }}"
 samba_user1: "{{ vault_samba_user1 | trim }}"
 samba_user2: "{{ vault_samba_user2 | trim }}"
@@ -54,4 +59,4 @@ smtp_gmail_user: "{{ vault_smtp_gmail_user | trim }}"
 smtp_gmail_password: "{{ vault_smtp_gmail_password | trim }}"
 smtp_hostname: "{{ vault_smtp_hostname | trim }}"
 smtp_mailname: "{{ vault_smtp_mailname | trim }}"
-virtual_host: "{{ vault_virtual_host | trim }}"
+#virtual_host_public: "{{ vault_virtual_host_public | trim }}"

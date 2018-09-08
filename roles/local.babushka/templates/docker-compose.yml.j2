@@ -21,7 +21,7 @@ services:
 
 
   nginx-proxy:
-    image: nginx:alpine
+    image: jwilder/nginx-proxy
     container_name: nginx-proxy
     restart: always
     ports:
@@ -34,31 +34,7 @@ services:
       - "nginx-html:/usr/share/nginx/html"
       - "nginx-ssl-certs:/etc/nginx/certs:ro"
       - "nginx-vhostd:/etc/nginx/vhost.d"
-
-
-  docker-gen:
-    image: jwilder/docker-gen
-    container_name: docker-gen
-    restart: always
-    depends_on:
-      - nginx-proxy
-    command:
-      - -notify-sighup
-      - nginx-proxy
-      - -watch
-      - -wait
-      - 5s:30s
-      - /etc/docker-gen/templates/nginx.tmpl
-      - /etc/nginx/conf.d/default.conf
-    labels:
-      - com.github.jrcs.letsencrypt_nginx_proxy_companion.docker_gen
-    volumes:
-      - "nginx-conf:/etc/nginx/conf.d"
-      - "nginx-html:/usr/share/nginx/html"
-      - "nginx-ssl-certs:/etc/nginx/certs:ro"
-      - "nginx-vhostd:/etc/nginx/vhost.d"
       - "/var/run/docker.sock:/tmp/docker.sock:ro"
-      - "./nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro"
 
 
   nginx-letsencrypt:
@@ -66,7 +42,7 @@ services:
     container_name: nginx-letsencrypt
     restart: always
     depends_on:
-      - docker-gen
+      - nginx-proxy
     volumes:
       - "nginx-html:/usr/share/nginx/html"
       - "nginx-ssl-certs:/etc/nginx/certs"
@@ -78,15 +54,40 @@ services:
     image: nginx:alpine
     container_name: nginx-public
     restart: always
-    ports:
-      - "8080:80"
-      - "8443:443"
     volumes:
-      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "./nginx-public.conf:/etc/nginx/nginx.conf:ro"
     environment:
-      - "VIRTUAL_HOST=${VIRTUAL_HOST}"
-      - "LETSENCRYPT_HOST=${LETSENCRYPT_HOST}"
-      - "LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}"
+      - "VIRTUAL_HOST=public.${DOMAIN_NAME}"
+      - "LETSENCRYPT_HOST=public.${DOMAIN_NAME}"
+      - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+
+
+  oauth2-proxy:
+    image: a5huynh/oauth2_proxy
+    container_name: oauth2-proxy
+    restart: always
+    command:
+      - --authenticated-emails-file=/authenticated-emails.conf
+      - --client-id=${OAUTH2_CLIENT_ID}
+      - --client-secret=${OAUTH2_CLIENT_SECRET}
+      - --cookie-secret=${OAUTH2_COOKIE_SECRET}
+      - --http-address=0.0.0.0:4180
+      - --upstream=http://nginx-private
+    environment:
+      - "VIRTUAL_HOST=private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},sickrage.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "VIRTUAL_PORT=4180"
+      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},sickrage.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+    volumes:
+      - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
+
+
+  nginx-private:
+    image: nginx:alpine
+    container_name: nginx-private
+    restart: always
+    volumes:
+      - "./nginx-private.conf:/etc/nginx/nginx.conf:ro"
 
 
   samba:
@@ -122,7 +123,7 @@ services:
 
 
   syncthing:
-    image: linuxserver/syncthing:47
+    image: linuxserver/syncthing
     container_name: syncthing
     restart: always
     network_mode: host
@@ -147,27 +148,32 @@ services:
     environment:
       - "GMVAULT_UID=1000"
       - "GMVAULT_GID=1000"
-      - "GMVAULT_EMAIL_ADDRESS=${GMVAULT_EMAIL_ADDRESS}"
+      - "GMVAULT_EMAIL_ADDRESS=${EMAIL_ADDRESS}"
     volumes:
       - "/mnt/storage/containers/gmvault/data:/data"
       - "./ssmtp.conf:/etc/ssmtp/ssmtp.conf"
 
 
   plex:
-    image: wernight/plex-media-server:latest
+    image: plexinc/pms-docker
     container_name: plex
+    hostname: babushka.engineroom.middlearth.lan
     restart: always
-    #network_mode: host
+    network_mode: host # only needed on first run/boot
     environment:
-      - "PLEX_LOGIN=${PLEX_LOGIN}"
-      - "PLEX_PASSWORD=${PLEX_PASSWORD}"
-      #- "X_PLEX_TOKEN=MY_X_PLEX_TOKEN"
+      - "ADVERTISE_IP=http://192.168.88.1:32400/"
+      - "ALLOWED_NETWORKS=192.168.88.0/24,192.168.1.0/24"
+      - "PLEX_GID=1000"
+      - "PLEX_UID=1000"
+      - "TZ=Europe/Berlin"
     ports:
       # for access to the Plex Media Server [required]
       - "32400:32400"
+      - "32400:32400/udp"
       # for access to the Plex DLNA Server
       - "1900:1900/udp"
       - "32469:32469"
+      - "32469:32469/udp"
       # for controlling Plex Home Theater via Plex Companion
       - "3005:3005"
       # for older Bonjour/Avahi network discovery
@@ -199,7 +205,7 @@ services:
       - "OPENVPN_USERNAME=${OPENVPN_USERNAME}"
       - "OPENVPN_PASSWORD=${OPENVPN_PASSWORD}"
       - "OPENVPN_OPTS=--replay-window 64 30 --mute-replay-warnings --inactive 3600 --ping 10 --ping-exit 60 --pull-filter ignore ping"
-      - "LOCAL_NETWORK=192.168.0.0/23"
+      - "LOCAL_NETWORK=192.168.88.0/24"
       - "TRANSMISSION_RATIO_LIMIT_ENABLED=true"
       - "TRANSMISSION_RATIO_LIMIT=1.5"
     ports:

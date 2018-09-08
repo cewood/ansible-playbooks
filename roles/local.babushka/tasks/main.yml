@@ -69,6 +69,30 @@
     - docker
     - docker-compose
 
+- name: "authenticated-emails.conf"
+  copy:
+    content: "{{ email_address }}"
+    dest: /root/docker-compose/authenticated-emails.conf
+    owner: root
+    group: root
+    mode: 0400
+  tags:
+    - pull
+    - ssh
+
+- name: "ssmtp.conf file"
+  template:
+    src: templates/ssmtp.conf.j2
+    dest: /root/docker-compose/ssmtp.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
 - name: "docker-compose .env"
   template:
     src: templates/docker-compose.env.j2
@@ -95,39 +119,10 @@
     - docker
     - docker-compose
 
-- name: "ssmtp.conf file"
+- name: "nginx public public config"
   template:
-    src: templates/ssmtp.conf.j2
-    dest: /root/docker-compose/ssmtp.conf
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - babushka
-    - tasks
-    - docker
-    - docker-compose
-
-- name: "nginx docker-gen template"
-  file:
-    src: files/nginx.tmpl
-    dest: /root/docker-compose/nginx.tmpl
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - babushka
-    - tasks
-    - docker
-    - docker-compose
-    - docker-gen
-    - proxy
-    - nginx
-
-- name: "nginx public proxy config"
-  template:
-    src: templates/nginx.conf.j2
-    dest: /root/docker-compose/nginx.conf
+    src: templates/nginx-public.conf.j2
+    dest: /root/docker-compose/nginx-public.conf
     owner: root
     group: root
     mode: 0644
@@ -137,4 +132,19 @@
     - docker
     - docker-compose
     - public
+    - nginx
+
+- name: "nginx private private config"
+  template:
+    src: templates/nginx-private.conf.j2
+    dest: /root/docker-compose/nginx-private.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+    - private
     - nginx
