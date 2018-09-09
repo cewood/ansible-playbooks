@@ -80,19 +80,6 @@
     - pull
     - ssh
 
-- name: "ssmtp.conf file"
-  template:
-    src: templates/ssmtp.conf.j2
-    dest: /root/docker-compose/ssmtp.conf
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - babushka
-    - tasks
-    - docker
-    - docker-compose
-
 - name: "docker-compose .env"
   template:
     src: templates/docker-compose.env.j2
@@ -119,7 +106,48 @@
     - docker
     - docker-compose
 
-- name: "nginx public public config"
+- name: "nginx private index.html"
+  template:
+    src: templates/index-private.html.j2
+    dest: /root/docker-compose/index-private.html
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "nginx private config"
+  template:
+    src: templates/nginx-private.conf.j2
+    dest: /root/docker-compose/nginx-private.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+    - private
+    - nginx
+
+- name: "nginx public index.html"
+  template:
+    src: templates/index-public.html.j2
+    dest: /root/docker-compose/index-public.html
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "nginx public config"
   template:
     src: templates/nginx-public.conf.j2
     dest: /root/docker-compose/nginx-public.conf
@@ -134,10 +162,10 @@
     - public
     - nginx
 
-- name: "nginx private private config"
+- name: "ssmtp.conf file"
   template:
-    src: templates/nginx-private.conf.j2
-    dest: /root/docker-compose/nginx-private.conf
+    src: templates/ssmtp.conf.j2
+    dest: /root/docker-compose/ssmtp.conf
     owner: root
     group: root
     mode: 0644
@@ -146,5 +174,3 @@
     - tasks
     - docker
     - docker-compose
-    - private
-    - nginx

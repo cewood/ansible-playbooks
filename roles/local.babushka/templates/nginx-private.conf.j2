@@ -5,12 +5,14 @@ events {
 http {
   server {
     listen 80;
-    server_name localhost private.{{ domain_base }};
+    server_name localhost private.{{ domain_name }};
+    root /usr/share/nginx/html;
+    index index.html index.htm;
   }
 
   server {
     listen 80;
-    server_name mikrotik.private.{{ domain_base }};
+    server_name mikrotik.private.{{ domain_name }};
 
     location / {
       proxy_pass http://192.168.88.1/;
@@ -19,7 +21,7 @@ http {
 
   server {
     listen 80;
-    server_name sickrage.private.{{ domain_base }};
+    server_name sickrage.private.{{ domain_name }};
 
     location / {
       proxy_pass http://sickrage:8081;
@@ -28,7 +30,7 @@ http {
 
   server {
     listen 80;
-    server_name transmission.private.{{ domain_base }};
+    server_name transmission.private.{{ domain_name }};
 
     location / {
       proxy_pass http://transmission:9091/;
