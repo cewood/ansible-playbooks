@@ -77,8 +77,11 @@
     group: root
     mode: 0400
   tags:
-    - pull
-    - ssh
+    - babushka
+    - tasks
+    - docker
+    - docker-compose
+    - oauth2_proxy
 
 - name: "docker-compose .env"
   template:

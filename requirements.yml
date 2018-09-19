@@ -8,12 +8,7 @@
   version: 4.3.0
   name: dev-sec.ansible-os-hardening
 
-# # angstwad.docker_ubuntu
-# - src: https://github.com/angstwad/docker.ubuntu
-#   version: v3.5.0
-#   name: angstwad.docker_ubuntu
-
 # angstwad.docker_ubuntu
-- src: https://github.com/cewood/docker.ubuntu
-  version: temp_bionic_hack
+- src: https://github.com/angstwad/docker.ubuntu
+  version: v3.6.2
   name: angstwad.docker_ubuntu

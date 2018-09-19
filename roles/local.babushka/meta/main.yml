@@ -95,6 +95,7 @@ dependencies:
     }
   - { role: angstwad.docker_ubuntu,
       become: yes,
+      docker_apt_channel: edge,
       tags: [
         "docker",
       ]

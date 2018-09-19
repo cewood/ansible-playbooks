@@ -5,7 +5,7 @@
 
 table filter {
     # External/non-ferm chains to preserve
-    chain (DOCKER DOCKER-USER DOCKER-ISOLATION-STAGE-1 DOCKER-ISOLATION-STAGE-2) @preserve;
+    chain (DOCKER DOCKER-USER DOCKER-ISOLATION DOCKER-ISOLATION-STAGE-1 DOCKER-ISOLATION-STAGE-2) @preserve;
 
     chain INPUT {
         policy DROP;
