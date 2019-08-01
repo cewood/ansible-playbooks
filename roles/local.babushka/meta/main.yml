@@ -53,50 +53,76 @@ galaxy_info:
     #       Maximum 20 tags per role.
 
 dependencies:
+  - { role: local.ansible-pull,
+      tags: [
+        "ansible-pull",
+        "local.ansible-pull"
+      ]
+    }
+
   - { role: local.ssh-authorised-keys,
       tags: [
-        "ssh",
-        "authorised-keys"
+        "ssh-authorised-keys",
+        "local.ssh-authorised-keys"
       ]
     }
+
   - { role: local.sshd-banner,
       tags: [
-        "ssh",
-        "banner"
+        "sshd-banner",
+        "local.sshd-banner"
       ]
     }
+
   - { role: local.papertrail-logging,
       tags: [
-        "logging",
-        "papertrail"
+        "papertrail-logging",
+        "local.papertrail-logging"
       ]
     }
+
   - { role: dev-sec.ansible-ssh-hardening,
-      os_auth_lockout_time: 60,
+      os_auth_lockout_time:        60,
       os_auth_pam_passwdqc_enable: false,
-      sftp_enabled: true,
-      ssh_allow_agent_forwarding: true,
-      ssh_allow_tcp_forwarding: true,
-      ssh_banner: true,
-      ssh_max_auth_retries: 5,  # should we remove this, i have too many keys :(
-      ssh_use_pam: true,  # to allow login via locked accounts, i.e. no passwords 
+      sftp_enabled:                true,
+      ssh_allow_agent_forwarding:  true,
+      ssh_allow_tcp_forwarding:    true,
+      ssh_banner:                  true,
+      ssh_max_auth_retries:        5,  # should we remove this, i have too many keys :(
+      ssh_use_pam:                 true,  # to allow login via locked accounts, i.e. no passwords
       tags: [
-        "ssh",
-        "security",
-        "dev-sec"
+        "ansible-ssh-hardening",
+        "dev-sec.ansible-ssh-hardening"
       ]
     }
+
   - { role: dev-sec.ansible-os-hardening,
       tags: [
-        "os",
-        "security",
-        "dev-sec"
+        "ansible-os-hardening",
+        "dev-sec.ansible-os-hardening"
       ]
     }
-  - { role: angstwad.docker_ubuntu,
-      become: yes,
-      docker_apt_channel: edge,
+
+  - { role: local.docker-compose,
+      compose_project_name: "babuskha",
+      domain_name:          "{{ vault_domain_name | trim }}",
+      email_address:        "{{ vault_email_address | trim }}",
+      oauth2_client_id:     "{{ vault_oauth2_client_id | trim }}",
+      oauth2_client_secret: "{{ vault_oauth2_client_secret | trim }}",
+      oauth2_cookie_secret: "{{ vault_oauth2_cookie_secret | trim }}",
+      openvpn_config:       "{{ vault_openvpn_config | trim }}",
+      openvpn_password:     "{{ vault_openvpn_password | trim }}",
+      openvpn_provider:     "{{ vault_openvpn_provider | trim }}",
+      openvpn_username:     "{{ vault_openvpn_username | trim }}",
+      radarr_apikey:        "{{ vault_radarr_apikey | trim }}",
+      samba_user1:          "{{ vault_samba_user1 | trim }}",
+      samba_user2:          "{{ vault_samba_user2 | trim }}",
+      smtp_gmail_password:  "{{ vault_smtp_gmail_password | trim }}",
+      smtp_gmail_user:      "{{ vault_smtp_gmail_user | trim }}",
+      smtp_hostname:        "{{ vault_smtp_hostname | trim }}",
+      smtp_mailname:        "{{ vault_smtp_mailname | trim }}",
       tags: [
-        "docker",
+        "docker-compose",
+        "local.docker-compose"
       ]
     }
