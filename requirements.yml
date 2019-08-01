@@ -1,11 +1,11 @@
 # dev-sec.ansible-ssh-hardening
 - src: https://github.com/dev-sec/ansible-ssh-hardening
-  version: 4.4.0
+  version: 5.0.0
   name: dev-sec.ansible-ssh-hardening
 
 # dev-sec.ansible-os-hardening
 - src: https://github.com/dev-sec/ansible-os-hardening
-  version: 4.3.0
+  version: 5.0.0
   name: dev-sec.ansible-os-hardening
 
 # angstwad.docker_ubuntu
