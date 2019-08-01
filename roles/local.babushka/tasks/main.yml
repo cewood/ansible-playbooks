@@ -23,21 +23,6 @@
     - system
     - packages
 
-- name: "ferm.conf"
-  template:
-    src: templates/ferm.conf.j2
-    dest: /etc/ferm/ferm.conf
-    owner: root
-    group: root
-    mode: 0644
-    validate: "ferm --noexec --lines %s"
-  tags:
-    - babushka
-    - tasks
-    - system
-    - iptables
-    - ferm
-
 - name: "Mount storage"
   mount:
     name: "{{ item.path }}"
