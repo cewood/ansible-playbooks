@@ -1,0 +1,288 @@
+version: "3.4"
+volumes:
+  nginx-conf:
+  nginx-html:
+  nginx-ssl-certs:
+  nginx-vhostd:
+
+
+services:
+  smtp:
+    image: namshi/smtp@sha256:0d1bd8288c2a3bfd14e9db4cd5abeae5b5887026ed99c05f634f9c45d5116360
+    container_name: smtp
+    restart: always
+    environment:
+      - "GMAIL_USER=${SMTP_GMAIL_USER}"
+      - "GMAIL_PASSWORD=${SMTP_GMAIL_PASSWORD}"
+      - "MAILNAME=${SMTP_MAILNAME}"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "25:25"
+
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine-0.7.0
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+    volumes:
+      - "nginx-conf:/etc/nginx/conf.d"
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs:ro"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+
+
+  nginx-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:v1.11.2
+    container_name: nginx-letsencrypt
+    restart: always
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+
+  nginx-public:
+    image: nginx:1.17.2-alpine
+    container_name: nginx-public
+    restart: always
+    volumes:
+      - "./nginx-public.conf:/etc/nginx/nginx.conf:ro"
+      - "./index-public.html:/usr/share/nginx/html/index.html"
+    environment:
+      - "VIRTUAL_HOST=public.${DOMAIN_NAME}"
+      - "LETSENCRYPT_HOST=public.${DOMAIN_NAME}"
+      - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+
+
+  oauth2-proxy:
+    image: a5huynh/oauth2_proxy@sha256:4a3cc343dde63325ebce980eda25f7458c343f94dac34089c7d0122158ab3119
+    container_name: oauth2-proxy
+    restart: always
+    command:
+      - --authenticated-emails-file=/authenticated-emails.conf
+      - --client-id=${OAUTH2_CLIENT_ID}
+      - --client-secret=${OAUTH2_CLIENT_SECRET}
+      - --cookie-secret=${OAUTH2_COOKIE_SECRET}
+      - --footer=private.${DOMAIN_NAME} is protected with oauth2
+      - --http-address=0.0.0.0:4180
+      - --upstream=http://nginx-private
+    environment:
+      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},sickrage.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "VIRTUAL_PORT=4180"
+      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},sickrage.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+    volumes:
+      - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
+
+
+  nginx-private:
+    image: nginx:1.17.2-alpine
+    container_name: nginx-private
+    restart: always
+    volumes:
+      - "./nginx-private.conf:/etc/nginx/nginx.conf:ro"
+      - "./index-private.html:/usr/share/nginx/html/index.html"
+
+
+  samba:
+    image: dperson/samba@sha256:ea7268d6f3b39e1647f88578c700735568eba3fedf84d89c6e060dccb2ed2c78
+    container_name: samba
+    restart: always
+    entrypoint:
+      - samba.sh
+      # -u
+      # - "<username;password>[;id;group-id/group-name]"
+      - -u
+      - "${SAMBA_USER1}"
+      - -u
+      - "${SAMBA_USER2}"
+      # -s
+      # - "<name;/path>[;browse;readonly;guest;users;admins;wl]"
+      - -s
+      - "storage;/storage;yes;yes;no;all;cewood;cewood"
+      # - -s
+      # - "backup;/backup;yes;yes;no;all;cewood;cewood"
+    environment:
+      - "NMBD=true"
+      - "WORKGROUP=middlearth"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "139:139"
+      - "445:445"
+      - "137:137/udp"
+      - "138:138/udp"
+    volumes:
+      # - "/mnt/backup1:/backup"
+      - "/mnt/storage:/storage"
+
+
+  syncthing:
+    image: linuxserver/syncthing:v1.2.0-ls15
+    container_name: syncthing
+    restart: always
+    network_mode: host
+    environment:
+      - "TZ=Europe/Berlin"
+      - "PUID=1000"
+      - "PGID=1000"
+    ports:
+      - "8384:8384"
+      - "21027:21027/udp"
+      - "22000:22000"
+    volumes:
+      - "/mnt/storage/containers/syncthing/config:/config"
+      - "/mnt/storage/containers/syncthing/data/self:/sync/self"
+      - "/mnt/storage/containers/syncthing/data:/sync"
+
+
+  gmvault:
+    image: aubertg/gmvault-docker@sha256:7b6551419fa5e09ad3593755e17327f379b321a73d2b7438242c71ee10bb8578
+    container_name: gmvault
+    restart: always
+    environment:
+      - "GMVAULT_UID=1000"
+      - "GMVAULT_GID=1000"
+      - "GMVAULT_EMAIL_ADDRESS=${EMAIL_ADDRESS}"
+    volumes:
+      - "/mnt/storage/containers/gmvault/data:/data"
+      - "./ssmtp.conf:/etc/ssmtp/ssmtp.conf"
+
+
+  plex:
+    image: plexinc/pms-docker:1.16.0.1226-7eb2c8f6f
+    container_name: plex
+    hostname: babushka.engineroom.middlearth.lan
+    restart: always
+    network_mode: host # only needed on first run/boot
+    environment:
+      - "ADVERTISE_IP=http://192.168.88.1:32400/"
+      - "ALLOWED_NETWORKS=192.168.88.0/24,192.168.1.0/24"
+      - "PLEX_GID=1000"
+      - "PLEX_UID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      # for access to the Plex Media Server [required]
+      - "32400:32400"
+      - "32400:32400/udp"
+      # for access to the Plex DLNA Server
+      - "1900:1900/udp"
+      - "32469:32469"
+      - "32469:32469/udp"
+      # for controlling Plex Home Theater via Plex Companion
+      - "3005:3005"
+      # for older Bonjour/Avahi network discovery
+      - "5353:5353/udp"
+      # for controlling Plex for Roku via Plex Companion
+      - "8324:8324"
+      # for current GDM network discovery
+      - "32410:32410/udp"
+      - "32412:32412/udp"
+      - "32413:32413/udp"
+      - "32414:32414/udp"
+    volumes:
+      - "/mnt/storage/containers/plex/config:/config"
+      - "/mnt/storage/media/videos/tv:/tv"
+      - "/mnt/storage/media/videos/misc:/misc"
+      - "/mnt/storage/media/videos/movies:/movies"
+
+
+  transmission:
+    image: haugene/transmission-openvpn
+    container_name: transmission
+    restart: always
+    privileged: true
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "OPENVPN_PROVIDER=${OPENVPN_PROVIDER}"
+      - "OPENVPN_CONFIG=${OPENVPN_CONFIG}"
+      - "OPENVPN_USERNAME=${OPENVPN_USERNAME}"
+      - "OPENVPN_PASSWORD=${OPENVPN_PASSWORD}"
+      - "OPENVPN_OPTS=--replay-window 64 30 --mute-replay-warnings --inactive 3600 --ping 10 --ping-exit 60 --pull-filter ignore ping"
+      - "LOCAL_NETWORK=192.168.88.0/24"
+      - "TRANSMISSION_RATIO_LIMIT_ENABLED=true"
+      - "TRANSMISSION_RATIO_LIMIT=1.5"
+      - "TRANSMISSION_WEB_UI=combustion"
+    ports:
+      - "9091:9091"
+    volumes:
+      - "/mnt/storage/containers/transmission/data:/data"
+      - "/mnt/storage/media/videos/movies:/movies"
+      - "/mnt/storage/media/videos/misc:/misc"
+      - "/mnt/storage/media/videos/sickrage:/sickrage"
+      - "/mnt/storage/media/videos/tv:/tv"
+      - "/etc/localtime:/etc/localtime:ro"
+
+
+  sickrage:
+    image: linuxserver/sickchill:1ed31566-ls15
+    container_name: sickrage
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "8081:8081"
+    volumes:
+      - "/mnt/storage/containers/sickrage/config:/config"
+      - "/mnt/storage/containers/sickrage/downloads:/downloads"
+      - "/mnt/storage/media/videos/sickrage:/sickrage"
+      - "./post-processing.sh:/sickrage/post-processing.sh"
+      - "/mnt/storage/media/videos/tv:/tv"
+
+
+  couchpotato:
+    image: linuxserver/couchpotato:75e576ee-ls21
+    container_name: couchpotato
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "5050:5050"
+    volumes:
+      - "/mnt/storage/containers/couchpotato/config:/config"
+      - "/mnt/storage/containers/couchpotato/downloads:/downloads"
+      - "/mnt/storage/media/videos/movies:/movies"
+
+
+  calibre-web:
+    image: linuxserver/calibre-web:V0.6.4-ls27
+    container_name: calibre-web
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "8083:8083"
+    volumes:
+      - "/mnt/storage/containers/calibre-web/config:/config"
+      - "/mnt/storage/documents/ebooks/calibre-library:/books:ro"
+
+
+  lazylibrarian:
+    image: linuxserver/lazylibrarian@40aeb6c4-ls111
+    container_name: lazylibrarian
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "5299:5299"
+    volumes:
+      - "/mnt/storage/containers/calibre-web/config:/config"
+      - "/mnt/storage/containers/calibre-web/downloads:/downloads"
+      - "/mnt/storage/documents/ebooks/calibre-library:/books"

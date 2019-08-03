@@ -1,0 +1,122 @@
+---
+# tasks file for local.docker-compose
+- name: "docker-compose folder"
+  file:
+    path: /root/docker-compose
+    state: directory
+    owner: root
+    group: root
+    mode: 0750
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "authenticated-emails.conf"
+  copy:
+    content: "{{ email_address }}"
+    dest: /root/docker-compose/authenticated-emails.conf
+    owner: root
+    group: root
+    mode: 0444
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+    - oauth2_proxy
+
+- name: "post-processing.sh"
+  copy:
+    src: files/post-processing.sh
+    dest: /root/docker-compose/post-processing.sh
+    owner: root
+    group: root
+    mode: 0755
+
+- name: "docker-compose .env"
+  template:
+    src: templates/docker-compose.j2.env
+    dest: /root/docker-compose/.env
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "docker-compose.yml"
+  copy:
+    src: files/docker-compose.yml
+    dest: /root/docker-compose/docker-compose.yml
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "nginx private index.html"
+  template:
+    src: templates/index-private.j2.html
+    dest: /root/docker-compose/index-private.html
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "nginx private config"
+  template:
+    src: templates/nginx-private.j2.conf
+    dest: /root/docker-compose/nginx-private.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+    - private
+    - nginx
+
+- name: "nginx public index.html"
+  template:
+    src: templates/index-public.j2.html
+    dest: /root/docker-compose/index-public.html
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+
+- name: "nginx public config"
+  template:
+    src: templates/nginx-public.j2.conf
+    dest: /root/docker-compose/nginx-public.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
+    - public
+    - nginx
+
+- name: "ssmtp.conf file"
+  template:
+    src: templates/ssmtp.j2.conf
+    dest: /root/docker-compose/ssmtp.conf
+    owner: root
+    group: root
+    mode: 0644
+  tags:
+    - tasks
+    - docker
+    - docker-compose
