@@ -1,14 +1,11 @@
 ---
 # defaults file for babushka
 mounts:
-  - source: UUID=0cb445cc-92cb-4d6c-b6f0-62b334486315
+  - source: UUID=4b8b3527-618c-416c-8f21-a232d750fdae
     path: /mnt/storage
     opts: noauto,x-systemd.automount,x-systemd.device-timeout=30
-  - source: UUID=1986aad1-e95c-4c1c-af3e-019703260e1b
+  - source: UUID=bd1d7435-d413-49dd-be44-c7f18ea1bb49
     path: /mnt/backup
-    opts: noauto,x-systemd.automount,x-systemd.device-timeout=30,x-systemd.idle-timeout=1800
-  - source: UUID=da2628f8-79c6-417a-8e90-861108b60c61
-    path: /mnt/backup2
     opts: noauto,x-systemd.automount,x-systemd.device-timeout=30,x-systemd.idle-timeout=1800
 services:
   - name: rsnapshot-sync
