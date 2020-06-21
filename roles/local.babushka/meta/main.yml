@@ -61,6 +61,59 @@ dependencies:
       ]
     }
 
+  - { role: local.module.rsnapshot,
+      backups: [
+        { name: default,
+          enabled: true,
+          snapshot_root: /mnt/backup,
+          retain_settings: [
+            { name: "daily",
+              count: 7,
+              schedule: "Tue..Sun *-*-* 1:00:00",
+              execs_entries: [
+                "daily"
+              ],
+            },
+            { name: "weekly",
+              count: 4,
+              schedule: "Mon *-*-8..31 1:00:00",
+              execs_entries: [
+                "weekly",
+                "daily"
+              ],
+            },
+            { name: "monthly",
+              count: 6,
+              schedule: "Mon *-2..12-1..7 1:00:00",
+              execs_entries: [
+                "monthly",
+                "weekly",
+                "daily"
+              ],
+            },
+            { name: "yearly",
+              count: 1,
+              schedule: "Mon *-1-1..7 1:00:00",
+              execs_entries: [
+                "yearly",
+                "monthly",
+                "weekly",
+                "daily"
+              ],
+            }
+          ],
+          backup_directives: [
+            "backup	/mnt/storage/code	babushka/",
+            "backup	/mnt/storage/documents	babushka/",
+            "backup	/mnt/storage/containers/syncthing/data/schrodinger.bridge.middlearth.lan	schrodinger/"
+          ],
+        }
+      ],
+      tags: [
+        "local.module.rsnapshot"
+      ]
+    }
+
   - { role: stuvusit.smartd,
       smartd_devices: {
         /dev/disk/by-uuid/4b8b3527-618c-416c-8f21-a232d750fdae: {
