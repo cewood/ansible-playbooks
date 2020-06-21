@@ -1,0 +1,12 @@
+exclude_paths:
+  - roles/angstwad.docker_ubuntu
+  - roles/ansible-role-debian-packager
+  - roles/dev-sec.ansible-os-hardening
+  - roles/dev-sec.ansible-ssh-hardening
+  - roles/geerlingguy.docker
+parseable: false
+quiet: true
+tags:
+  - run_this_tag
+use_default_rules: true
+verbosity: 1
