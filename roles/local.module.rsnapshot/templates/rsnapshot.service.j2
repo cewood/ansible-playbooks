@@ -1,0 +1,10 @@
+[Unit]
+Description=rsnapshot {{ item.0.name }} {{ item.1.name }} backup
+
+[Service]
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+{% for entry in item.1.execs_entries %}
+ExecStart=/usr/bin/rsnapshot -c /etc/rsnapshot-{{ item.0.name }}.conf {{ entry }}
+{% endfor %}

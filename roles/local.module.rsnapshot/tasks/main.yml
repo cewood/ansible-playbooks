@@ -1,0 +1,81 @@
+---
+# tasks file for module.local.rsnapshot
+- name: Install packages
+  apt:
+    name:
+      - rsnapshot
+
+- name: Generate rsnapshot config files
+  template:
+    src: templates/rsnapshot.conf
+    dest: /etc/rsnapshot-{{ item.name }}.conf
+    owner: root
+    group: root
+    mode: 0644
+    validate: 'rsnapshot -c %s configtest'
+  when: item.enabled|default(True)
+  with_items: "{{ backups }}"
+  tags:
+    - tasks
+    - rsnapshot
+    - config
+
+- name: Generate systemd service files
+  template:
+    src: templates/rsnapshot.service.j2
+    dest: /etc/systemd/system/rsnapshot-{{ item.0.name }}-{{ item.1.name }}.service
+    owner: root
+    group: root
+    mode: 0644
+    validate: 'systemd-analyze verify %s'
+  when: item.enabled|default(True)
+  with_subelements:
+    - "{{ backups }}"
+    - retain_settings
+  tags:
+    - tasks
+    - systemd
+    - service
+
+- name: Generate systemd timer files
+  template:
+    src: templates/rsnapshot.timer.j2
+    dest: /etc/systemd/system/rsnapshot-{{ item.0.name }}-{{ item.1.name }}.timer
+    owner: root
+    group: root
+    mode: 0644
+    validate: 'systemd-analyze verify %s'
+  when: item.enabled|default(True)
+  with_subelements:
+    - "{{ backups }}"
+    - retain_settings
+  tags:
+    - tasks
+    - systemd
+    - timer
+
+- name: Enable systemd services
+  systemd:
+    enabled: "{{ item.0.enabled | default(true) }}"
+    daemon_reload: yes
+    name: rsnapshot-{{ item.0.name }}-{{ item.1.name }}.service
+  with_subelements:
+    - "{{ backups }}"
+    - retain_settings
+  tags:
+    - tasks
+    - systemd
+    - service
+
+- name: Enable systemd timers
+  systemd:
+    enabled: "{{ item.0.enabled | default(true) }}"
+    daemon_reload: yes
+    name: rsnapshot-{{ item.0.name }}-{{ item.1.name }}.timer
+  with_subelements:
+    - "{{ backups }}"
+    - retain_settings
+  tags:
+    - tasks
+    - systemd
+    - timer

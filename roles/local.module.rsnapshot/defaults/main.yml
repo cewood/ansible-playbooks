@@ -1,0 +1,3 @@
+---
+# defaults file for module.local.rsnapshot
+backups: []

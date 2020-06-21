@@ -1,0 +1,9 @@
+[Unit]
+Description=rsnapshot {{ item.0.name }} {{ item.1.name }} backup
+
+[Timer]
+OnCalendar={{ item.1.schedule }}
+Unit=rsnapshot-{{ item.0.name }}-{{ item.1.name }}.service
+
+[Install]
+WantedBy=timers.target
