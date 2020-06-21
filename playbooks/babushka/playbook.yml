@@ -5,7 +5,7 @@
     - { role: local.babushka,
         become: yes,
         tags: [
-          "role",
+          "local.babushka",
           "babushka",
         ]
       }
