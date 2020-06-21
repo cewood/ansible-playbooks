@@ -1,48 +1,15 @@
 galaxy_info:
-  author: 
-  description: Host specific role for Babushka
-  company: your company (optional)
+  author: Cameron Wood
+  description: Private host specific role for Babushka
 
-  # If the issue tracker for your role is not on github, uncomment the
-  # next line and provide a value
-  # issue_tracker_url: http://example.com/issue/tracker
+  license: MIT
 
-  # Some suggested licenses:
-  # - BSD (default)
-  # - MIT
-  # - GPLv2
-  # - GPLv3
-  # - Apache
-  # - CC-BY
-  license: GPLv3
+  min_ansible_version: 2.9
 
-  min_ansible_version: 2.4
-
-  # If this a Container Enabled role, provide the minimum Ansible Container version.
-  # min_ansible_container_version:
-
-  # Optionally specify the branch Galaxy will use when accessing the GitHub
-  # repo for this role. During role install, if no tags are available,
-  # Galaxy will use this branch. During import Galaxy will access files on
-  # this branch. If Travis integration is configured, only notifications for this
-  # branch will be accepted. Otherwise, in all cases, the repo's default branch
-  # (usually master) will be used.
-  #github_branch:
-
-  #
-  # platforms is a list of platforms, and each platform has a name and a list of versions.
-  #
-  # platforms:
-  # - name: Fedora
-  #   versions:
-  #   - all
-  #   - 25
-  # - name: SomePlatform
-  #   versions:
-  #   - all
-  #   - 1.0
-  #   - 7
-  #   - 99.99
+  platforms:
+  - name: Ubuntu
+    versions:
+    - all
 
   galaxy_tags: []
     # List tags for your role here, one per line. A tag is a keyword that describes
@@ -53,53 +20,21 @@ galaxy_info:
     #       Maximum 20 tags per role.
 
 dependencies:
-  - { role: local.ansible-pull,
-      tags: [
-        "ansible-pull",
-        "local.ansible-pull"
-      ]
-    }
-
   - { role: local.ssh-authorised-keys,
       tags: [
-        "ssh-authorised-keys",
         "local.ssh-authorised-keys"
       ]
     }
 
   - { role: local.sshd-banner,
       tags: [
-        "sshd-banner",
         "local.sshd-banner"
       ]
     }
 
   - { role: local.papertrail-logging,
       tags: [
-        "papertrail-logging",
         "local.papertrail-logging"
-      ]
-    }
-
-  - { role: dev-sec.ansible-ssh-hardening,
-      os_auth_lockout_time:        60,
-      os_auth_pam_passwdqc_enable: false,
-      sftp_enabled:                true,
-      ssh_allow_agent_forwarding:  true,
-      ssh_allow_tcp_forwarding:    true,
-      ssh_banner:                  true,
-      ssh_max_auth_retries:        5,  # should we remove this, i have too many keys :(
-      ssh_use_pam:                 true,  # to allow login via locked accounts, i.e. no passwords
-      tags: [
-        "ansible-ssh-hardening",
-        "dev-sec.ansible-ssh-hardening"
-      ]
-    }
-
-  - { role: dev-sec.ansible-os-hardening,
-      tags: [
-        "ansible-os-hardening",
-        "dev-sec.ansible-os-hardening"
       ]
     }
 
@@ -122,7 +57,53 @@ dependencies:
       smtp_hostname:        "{{ vault_smtp_hostname | trim }}",
       smtp_mailname:        "{{ vault_smtp_mailname | trim }}",
       tags: [
-        "docker-compose",
         "local.docker-compose"
+      ]
+    }
+
+  - { role: stuvusit.smartd,
+      smartd_devices: {
+        /dev/disk/by-uuid/4b8b3527-618c-416c-8f21-a232d750fdae: {
+          mail_recipients: [ "{{ vault_smartd_mail | trim }}" ],
+          type: "sat",
+        },
+        /dev/disk/by-uuid/bd1d7435-d413-49dd-be44-c7f18ea1bb49: {
+          mail_recipients: [ "{{ vault_smartd_mail | trim }}" ],
+          type: "sat",
+        },
+      },
+      tags: [
+        "stuvusit.smartd"
+      ]
+    }
+
+  - { role: jnv.unattended-upgrades,
+      unattended_mail: '{{ vault_unattended_mail | trim }}',
+      unattended_mail_only_on_error: true,
+      unattended_remove_unused_dependencies: true,
+      unattended_update_days: '{"Sat";"Sun"}',
+      unattended_automatic_reboot_time: '06:00',
+      tags: [
+        "jnv.unattended-upgrades"
+      ]
+    }
+
+  - { role: dev-sec.ansible-ssh-hardening,
+      os_auth_lockout_time:        60,
+      os_auth_pam_passwdqc_enable: false,
+      sftp_enabled:                true,
+      ssh_allow_agent_forwarding:  true,
+      ssh_allow_tcp_forwarding:    "yes",
+      ssh_banner:                  true,
+      ssh_max_auth_retries:        5,  # should we remove this, i have too many keys :(
+      ssh_use_pam:                 true,  # to allow login via locked accounts, i.e. no passwords
+      tags: [
+        "dev-sec.ansible-ssh-hardening"
+      ]
+    }
+
+  - { role: dev-sec.ansible-os-hardening,
+      tags: [
+        "dev-sec.ansible-os-hardening"
       ]
     }
