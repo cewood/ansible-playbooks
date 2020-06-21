@@ -1,14 +1,24 @@
 # dev-sec.ansible-ssh-hardening
 - src: https://github.com/dev-sec/ansible-ssh-hardening
-  version: 5.0.0
+  version: 9.0.0
   name: dev-sec.ansible-ssh-hardening
 
 # dev-sec.ansible-os-hardening
 - src: https://github.com/dev-sec/ansible-os-hardening
-  version: 5.0.0
+  version: 6.0.1
   name: dev-sec.ansible-os-hardening
 
-# angstwad.docker_ubuntu
-- src: https://github.com/angstwad/docker.ubuntu
-  version: v3.6.2
-  name: angstwad.docker_ubuntu
+# geerlingguy.docker
+- src: https://github.com/geerlingguy/ansible-role-docker
+  version: 2.8.0
+  name: geerlingguy.docker
+
+# jnv.unattended-upgrades
+- src: https://github.com/jnv/ansible-role-unattended-upgrades
+  version: v1.8.0
+  name: jnv.unattended-upgrades
+
+# stuvusit.smartd
+- src: https://github.com/stuvusIT/smartd
+  version: 3bc09cc
+  name: stuvusit.smartd
