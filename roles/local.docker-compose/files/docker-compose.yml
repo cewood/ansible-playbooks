@@ -38,7 +38,7 @@ services:
 
 
   nginx-letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion:v1.11.2
+    image: jrcs/letsencrypt-nginx-proxy-companion:v1.12.1
     container_name: nginx-letsencrypt
     restart: always
     depends_on:
@@ -76,9 +76,9 @@ services:
       - --http-address=0.0.0.0:4180
       - --upstream=http://nginx-private
     environment:
-      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},sickrage.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
       - "VIRTUAL_PORT=4180"
-      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},sickrage.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
       - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
     volumes:
       - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
@@ -126,7 +126,7 @@ services:
 
 
   syncthing:
-    image: linuxserver/syncthing:v1.2.0-ls15
+    image: linuxserver/syncthing:v1.5.0-ls34
     container_name: syncthing
     restart: always
     network_mode: host
@@ -158,7 +158,7 @@ services:
 
 
   plex:
-    image: plexinc/pms-docker:1.16.0.1226-7eb2c8f6f
+    image: plexinc/pms-docker:1.19.3.2852-219a9974e
     container_name: plex
     hostname: babushka.engineroom.middlearth.lan
     restart: always
@@ -196,7 +196,7 @@ services:
 
 
   transmission:
-    image: haugene/transmission-openvpn
+    image: haugene/transmission-openvpn:2.12
     container_name: transmission
     restart: always
     privileged: true
@@ -223,9 +223,9 @@ services:
       - "/etc/localtime:/etc/localtime:ro"
 
 
-  sickrage:
-    image: linuxserver/sickchill:1ed31566-ls15
-    container_name: sickrage
+  medusa:
+    image: linuxserver/medusa:v0.3.16-ls50
+    container_name: medusa
     restart: always
     environment:
       - "PUID=1000"
@@ -234,15 +234,15 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      - "/mnt/storage/containers/sickrage/config:/config"
-      - "/mnt/storage/containers/sickrage/downloads:/downloads"
+      - "/mnt/storage/containers/medusa/config:/config"
+      - "/mnt/storage/containers/medusa/downloads:/downloads"
       - "/mnt/storage/media/videos/sickrage:/sickrage"
-      - "./post-processing.sh:/sickrage/post-processing.sh"
+      - "./post-processing.sh:/post-processing.sh"
       - "/mnt/storage/media/videos/tv:/tv"
 
 
   couchpotato:
-    image: linuxserver/couchpotato:75e576ee-ls21
+    image: linuxserver/couchpotato:7260c12f-ls35
     container_name: couchpotato
     restart: always
     environment:
@@ -272,17 +272,52 @@ services:
       - "/mnt/storage/documents/ebooks/calibre-library:/books:ro"
 
 
-  lazylibrarian:
-    image: linuxserver/lazylibrarian@40aeb6c4-ls111
-    container_name: lazylibrarian
+  netdata:
+    image: netdata/netdata:v1.18.1
+    container_name: netdata
+    restart: always
+    hostname: bastion.engineroom.cewood.xyz # set to fqdn of host
+    environment:
+      - "TZ=Europe/Berlin"
+    ports:
+      - "19999:19999"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      - "/etc/passwd:/host/etc/passwd:ro"
+      - "/etc/group:/host/etc/group:ro"
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+
+
+  tautulli:
+    image: tautulli/tautulli@sha256:3094c7e5758e82893e6a5ff948a5e6bba364c343939f54f78a1e7c75145b1d12
+    container_name: tautulli
     restart: always
     environment:
       - "PUID=1000"
       - "PGID=1000"
       - "TZ=Europe/Berlin"
     ports:
-      - "5299:5299"
+      - "8181:8181"
     volumes:
-      - "/mnt/storage/containers/calibre-web/config:/config"
-      - "/mnt/storage/containers/calibre-web/downloads:/downloads"
-      - "/mnt/storage/documents/ebooks/calibre-library:/books"
+      - "/mnt/storage/containers/tautulli/config:/config"
+      - "/mnt/storage/containers/plex/config/Library/Application Support/Plex Media Server/Logs/:/plex_logs:ro"
+
+
+  unifi:
+    image: "jacobalberty/unifi:5.12.35"
+    container_name: unifi
+    restart: always
+    ports:
+      - "3478:3478/udp" # STUN
+      - "6789:6789/tcp" # Speed test
+      - "8080:8080/tcp" # Device/ controller comm.
+      - "8443:8443/tcp" # Controller GUI/API as seen in a web browser
+      - "8880:8880/tcp" # HTTP portal redirection
+      - "8843:8843/tcp" # HTTPS portal redirection
+      - "10001:10001/udp" # AP discovery
+    volumes:
+      - "/mnt/storage/containers/unifi/data:/unifi"
