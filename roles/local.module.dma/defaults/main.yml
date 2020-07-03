@@ -1,0 +1,6 @@
+---
+# defaults file for module.local.dma
+auth_entries: []
+defer: false
+fullbounce: false
+nullclient: false

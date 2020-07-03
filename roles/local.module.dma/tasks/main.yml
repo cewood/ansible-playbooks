@@ -1,0 +1,54 @@
+---
+# tasks file for module.local.dma
+
+- name: Install packages
+  apt:
+    name:
+      - dma
+  tags:
+    - package
+
+- name: Generate dma config file
+  template:
+    src: templates/dma.conf.j2
+    dest: /etc/dma/dma.conf
+    owner: root
+    group: mail
+    mode: 0640
+  tags:
+    - config
+    - template
+
+- name: Generate dma auth file
+  template:
+    src: auth.conf.j2
+    dest: /etc/dma/auth.conf
+    owner: root
+    group: mail
+    mode: 0640
+  when: auth_entries is defined
+  tags:
+    - auth
+    - template
+
+- name: Set dma/mailname with debconf
+  debconf:
+    name: dma
+    setting: dma/mailname
+    value: "{{ mailname }}"
+    vtype: text
+  when: mailname is defined
+  tags:
+    - config
+    - debconf
+
+- name: Set dma/relayhost with debconf
+  debconf:
+    name: dma
+    setting: dma/relayhost
+    value: "{{ smarthost }}"
+    vtype: text
+  when: smarthost is defined
+  tags:
+    - config
+    - debconf

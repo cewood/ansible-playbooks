@@ -1,0 +1,131 @@
+# {{ ansible_managed }}
+
+# $DragonFly: src/etc/dma/dma.conf,v 1.2 2008/02/04 10:11:41 matthias Exp $
+#
+# Your smarthost (also called relayhost).  Leave blank if you don't want
+# smarthost support.
+# NOTE: on Debian systems this is handled via debconf!
+# Please use dpkg-reconfigure dma to change this value.
+{% if smarthost is defined %}
+SMARTHOST {{ smarthost }}
+{% else %}
+#SMARTHOST localhost
+{% endif %}
+
+# Use this SMTP port.  Most users will be fine with the default (25)
+{% if port is defined %}
+PORT {{ port }}
+{% else %}
+#PORT 25
+{% endif %}
+
+# Path to your alias file.  Just stay with the default.
+{% if aliases is defined %}
+ALIASES {{ aliases }}
+{% else %}
+#ALIASES /etc/aliases
+{% endif %}
+
+# Path to your spooldir.  Just stay with the default.
+{% if spooldir is defined %}
+SPOOLDIR {{ spooldir }}
+{% else %}
+#SPOOLDIR /var/spool/dma
+{% endif %}
+
+# SMTP authentication
+{% if authpath is defined %}
+AUTHPATH {{ authpath }}
+{% else %}
+#AUTHPATH /etc/dma/auth.conf
+{% endif %}
+
+# Uncomment if yout want TLS/SSL support
+{% if securetransfer is defined %}
+SECURETRANSFER
+{% else %}
+#SECURETRANSFER
+{% endif %}
+
+# Uncomment if you want STARTTLS support (only used in combination with
+# SECURETRANSFER)
+{% if starttls is defined %}
+STARTTLS
+{% else %}
+#STARTTLS
+{% endif %}
+
+# Uncomment if you have specified STARTTLS above and it should be allowed
+# to fail ("opportunistic TLS", use an encrypted connection when available
+# but allow an unencrypted one to servers that do not support it)
+{% if opportunistic_tls is defined %}
+OPPORTUNISTIC_TLS
+{% else %}
+#OPPORTUNISTIC_TLS
+{% endif %}
+
+# Path to your local SSL certificate
+{% if certfile is defined %}
+CERTFILE {{ certfile }}
+{% else %}
+#CERTFILE
+{% endif %}
+
+# If you want to use plain text SMTP login without using encryption, change
+# the SECURE entry below to INSECURE.  Otherwise plain login will only work
+# over a secure connection.  Use this option with caution.
+{% if secure is defined and true %}
+SECURE
+{% elif secure is defined and false %}
+INSECURE
+{% else %}
+#SECURE
+{% endif %}
+
+# Uncomment if you want to defer your mails.  This is useful if you are
+# behind a dialup line.  You have to submit your mails manually with dma -q
+{% if defer is true %}
+DEFER
+{% else %}
+#DEFER
+{% endif %}
+
+# Uncomment if you want the bounce message to include the complete original
+# message, not just the headers.
+{% if fullbounce is true %}
+FULLBOUNCE
+{% else %}
+#FULLBOUNCE
+{% endif %}
+
+# The internet hostname dma uses to identify the host.
+# If not set or empty, the result of gethostname(2) is used.
+# If MAILNAME is an absolute path to a file, the first line of this file
+# will be used as the hostname.
+# NOTE: on Debian systems this is handled via debconf!
+# Please use dpkg-reconfigure dma to change this value.
+{% if mailname is defined %}
+MAILNAME {{ mailname }}
+{% else %}
+#MAILNAME
+{% endif %}
+
+# Masquerade envelope from addresses with this address/hostname.
+# Use this if mails are not accepted by destination mail servers because
+# your sender domain is invalid.
+# By default, MASQUERADE is not set.
+# Format: MASQUERADE [user@][host]
+# Examples:
+# MASQUERADE john@  on host "hamlet" will send all mails as john@hamlet
+# MASQUERADE percolator  will send mails as $username@percolator, e.g. fish@percolator
+# MASQUERADE herb@ert  will send all mails as herb@ert
+{% if masquerade is defined %}
+MASQUERADE  {{ masquerade }}
+{% endif %}
+
+# Directly forward the mail to the SMARTHOST bypassing aliases and local delivery
+{% if nullclient is true %}
+NULLCLIENT
+{% else %}
+#NULLCLIENT
+{% endif %}
