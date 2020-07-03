@@ -13,7 +13,6 @@
     group: root
     mode: 0644
     validate: 'rsnapshot -c %s configtest'
-  when: item.enabled|default(True)
   with_items: "{{ backups }}"
   tags:
     - tasks
@@ -27,8 +26,7 @@
     owner: root
     group: root
     mode: 0644
-    validate: 'systemd-analyze verify %s'
-  when: item.enabled|default(True)
+    # validate: 'systemd-analyze verify %s'  # systemd 237 has a bug with analyze
   with_subelements:
     - "{{ backups }}"
     - retain_settings
@@ -44,8 +42,7 @@
     owner: root
     group: root
     mode: 0644
-    validate: 'systemd-analyze verify %s'
-  when: item.enabled|default(True)
+    # validate: 'systemd-analyze verify %s'  # systemd 237 has a bug with analyze
   with_subelements:
     - "{{ backups }}"
     - retain_settings
@@ -70,6 +67,7 @@
 - name: Enable systemd timers
   systemd:
     enabled: "{{ item.0.enabled | default(true) }}"
+    state: "{{ item.0.enabled | default(true) | ternary('started', 'stopped') }}"
     daemon_reload: yes
     name: rsnapshot-{{ item.0.name }}-{{ item.1.name }}.timer
   with_subelements:
