@@ -8,7 +8,7 @@ volumes:
 
 services:
   smtp:
-    image: namshi/smtp@sha256:0d1bd8288c2a3bfd14e9db4cd5abeae5b5887026ed99c05f634f9c45d5116360
+    image: namshi/smtp@sha256:aa63b8de68ce63dfcf848c56f3c1a16d81354f4accd4242a0086c57dd5a91d77
     container_name: smtp
     restart: always
     environment:
