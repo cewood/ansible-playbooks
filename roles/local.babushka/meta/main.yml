@@ -119,6 +119,13 @@ dependencies:
       ]
     }
 
+  - { role: local.module.dma,
+      smarthost: localhost,
+      tags: [
+        "local.module.dma"
+      ]
+    }
+
   - { role: stuvusit.smartd,
       smartd_devices: {
         /dev/disk/by-uuid/4b8b3527-618c-416c-8f21-a232d750fdae: {
