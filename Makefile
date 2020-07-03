@@ -1,11 +1,12 @@
-DOCKER_INTERACTIVE = $(if $(shell printenv GITHUB_ACTIONS),-t,-it)
-GID                = $(or $(shell printend GID), $(shell id -g))
-GROUP              = $(or $(shell printend GROUP), $(shell id -g -n))
-GIT_REVISION       = $(or $(shell printenv GIT_REVISION), $(shell git describe --match= --always --abbrev=7 --dirty))
-HOME               = $(shell printenv HOME)
-UID                = $(or $(shell printenv UID), $(shell id -u))
-USER               = $(or $(shell printenv USER), $(shell id -u -n))
-VERSION            = snapshot
+ANSIBLE_KEEP_REMOTE_FILES = $(or $(shell printenv ANSIBLE_KEEP_REMOTE_FILES),0)
+DOCKER_INTERACTIVE        = $(if $(shell printenv GITHUB_ACTIONS),-t,-it)
+GID                       = $(or $(shell printend GID), $(shell id -g))
+GIT_REVISION              = $(or $(shell printenv GIT_REVISION), $(shell git describe --match= --always --abbrev=7 --dirty))
+GROUP                     = $(or $(shell printend GROUP), $(shell id -g -n))
+HOME                      = $(shell printenv HOME)
+UID                       = $(or $(shell printenv UID), $(shell id -u))
+USER                      = $(or $(shell printenv USER), $(shell id -u -n))
+VERSION                   = snapshot
 
 
 .PHONY: syntax
@@ -61,6 +62,7 @@ run-docker: docker-do-run
 docker-do-%: .dockerimage
 	docker run --rm \
 	  ${DOCKER_INTERACTIVE} \
+	  -e ANSIBLE_KEEP_REMOTE_FILES=${ANSIBLE_KEEP_REMOTE_FILES} \
 	  -e HOME=/homedir \
 	  -e SSH_AUTH_SOCK=/var/run/ssh-agent.sock \
 	  -v ${HOME}/.ssh:/homedir/.ssh:ro \
