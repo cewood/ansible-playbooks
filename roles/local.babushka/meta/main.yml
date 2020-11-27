@@ -104,13 +104,15 @@ dependencies:
           ],
           backup_directives: [
             "backup	/mnt/storage/code	babushka/",
-            "backup	/mnt/storage/documents	babushka/",
             "backup	/mnt/storage/containers/medusa/config	babushka/medusa_config",
             "backup	/mnt/storage/containers/plex/config	babushka/plex_config",
             "backup	/mnt/storage/containers/syncthing/config	babushka/syncthing_config",
-            "backup	/mnt/storage/containers/unifi/data	babushka/unifi_data",
+            "backup	/mnt/storage/containers/syncthing/data/schrodinger	schrodinger/",
             "backup	/mnt/storage/containers/transmission/data/transmission-home	babushka/transmission_home",
-            "backup	/mnt/storage/containers/syncthing/data/schrodinger	schrodinger/"
+            "backup	/mnt/storage/containers/unifi/data	babushka/unifi_data",
+            "backup	/mnt/storage/documents	babushka/",
+            "backup	/mnt/storage/media/videos/movies/library	babushka/",
+            "backup	/mnt/storage/media/videos/tv/library	babushka/"
           ],
         }
       ],
