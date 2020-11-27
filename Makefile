@@ -4,6 +4,7 @@ GID                       = $(or $(shell printend GID), $(shell id -g))
 GIT_REVISION              = $(or $(shell printenv GIT_REVISION), $(shell git describe --match= --always --abbrev=7 --dirty))
 GROUP                     = $(or $(shell printend GROUP), $(shell id -g -n))
 HOME                      = $(shell printenv HOME)
+PLAYBOOKS                 = $(shell find . -name playbook.yml)
 UID                       = $(or $(shell printenv UID), $(shell id -u))
 USER                      = $(or $(shell printenv USER), $(shell id -u -n))
 VERSION                   = snapshot
@@ -15,7 +16,10 @@ syntax:
 	  --syntax-check \
 	  -vv \
 	  -i inventory.yml \
-	  $(filter-out $@,$(MAKECMDGOALS))
+	  $(or ${ARGS},${PLAYBOOKS})
+
+.PHONY: syntax-docker
+syntax-docker: docker-do-syntax
 
 
 .PHONY: vendor
@@ -26,10 +30,13 @@ vendor:
 	  --force \
 	  -r requirements.yml
 
+.PHONY: vendor-docker
+vendor-docker: docker-do-vendor
+
 
 .PHONY: lint
 lint:
-	ansible-lint ${ARGS}
+	ansible-lint $(or ${ARGS},${PLAYBOOKS})
 
 .PHONY: lint-docker
 lint-docker: docker-do-lint
