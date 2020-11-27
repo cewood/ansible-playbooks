@@ -76,9 +76,9 @@ services:
       - --http-address=0.0.0.0:4180
       - --upstream=http://nginx-private
     environment:
-      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},moinmoin.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
       - "VIRTUAL_PORT=4180"
-      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME}"
+      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},moinmoin.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
       - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
     volumes:
       - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
@@ -308,7 +308,7 @@ services:
 
 
   unifi:
-    image: "jacobalberty/unifi:5.12.35"
+    image: "jacobalberty/unifi:6.0.28"
     container_name: unifi
     restart: always
     ports:
@@ -321,3 +321,54 @@ services:
       - "10001:10001/udp" # AP discovery
     volumes:
       - "/mnt/storage/containers/unifi/data:/unifi"
+
+
+  filebrowser:
+    image: filebrowser/filebrowser:v2.3.0
+    container_name: filebrowser
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+      - "FB_NOAUTH=1"
+      - "FB_PERM_DELETE=0"
+      - "FB_PERM_ADMIN=0"
+    ports:
+      - "8084:80"
+    volumes:
+      - "/mnt/storage:/srv/storage:ro"
+      - "/mnt/backup:/srv/backup:ro"
+
+
+  moinmoin:
+    image: olavgg/moinmoin-wiki:1.9.10.1
+    container_name: moinmoin
+    restart: always
+    environment:
+      - "UID=1000"
+      - "GID=1000"
+      - "TZ=Europe/Berlin"
+      - "NOSSL=1"
+    ports:
+      - "8082:80"
+      - "4443:443"
+    volumes:
+      - "/mnt/storage/containers/moinmoin/data:/usr/local/share/moin/data"
+      - "./wikiconfig.py:/usr/local/share/moin/wikiconfig.py"
+      - "./wiki-logo.png:/usr/local/lib/python2.7/dist-packages/MoinMoin/web/static/htdocs/common/logo.png"
+
+
+  fava:
+    image: yegle/fava:version-1.15
+    container_name: fava
+    restart: always
+    environment:
+      - "UID=1000"
+      - "GID=1000"
+      - "TZ=Europe/Berlin"
+      - "BEANCOUNT_FILE=/bean/main.bean"
+    ports:
+      - "5000:5000"
+    volumes:
+      - "/mnt/storage/containers/syncthing/data/schrodinger/code/src/github.com/cewood/finances-ledger:/bean:ro"
