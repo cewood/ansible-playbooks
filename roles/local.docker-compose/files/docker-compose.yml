@@ -196,15 +196,15 @@ services:
 
 
   transmission:
-    image: haugene/transmission-openvpn:2.12
+    image: haugene/transmission-openvpn:2.14
     container_name: transmission
     restart: always
     privileged: true
     environment:
       - "PUID=1000"
       - "PGID=1000"
+      - "${OPENVPN_PROVIDER}_COUNTRY=${OPENVPN_COUNTRY}"
       - "OPENVPN_PROVIDER=${OPENVPN_PROVIDER}"
-      - "OPENVPN_CONFIG=${OPENVPN_CONFIG}"
       - "OPENVPN_USERNAME=${OPENVPN_USERNAME}"
       - "OPENVPN_PASSWORD=${OPENVPN_PASSWORD}"
       - "OPENVPN_OPTS=--replay-window 64 30 --mute-replay-warnings --inactive 3600 --ping 10 --ping-exit 60 --pull-filter ignore ping"
