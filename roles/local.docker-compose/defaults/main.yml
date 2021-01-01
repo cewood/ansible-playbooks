@@ -1,8 +1,12 @@
 ---
 # defaults file for local.docker-compose
 compose_project_name: "UNSET"
+authenticated_emails:
+  - "UNSET"
 domain_name: "UNSET"
 email_address: "UNSET"
+mbsync_account: "UNSET"
+mbsync_password: "UNSET"
 oauth2_client_id: "UNSET"
 oauth2_client_secret: "UNSET"
 oauth2_cookie_secret: "UNSET"

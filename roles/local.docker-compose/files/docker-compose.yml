@@ -1,4 +1,8 @@
 version: "3.4"
+networks:
+  monitor-net:
+    driver: bridge
+
 volumes:
   nginx-conf:
   nginx-html:
@@ -10,7 +14,7 @@ services:
   smtp:
     image: namshi/smtp@sha256:aa63b8de68ce63dfcf848c56f3c1a16d81354f4accd4242a0086c57dd5a91d77
     container_name: smtp
-    restart: always
+    restart: unless-stopped
     environment:
       - "GMAIL_USER=${SMTP_GMAIL_USER}"
       - "GMAIL_PASSWORD=${SMTP_GMAIL_PASSWORD}"
@@ -18,12 +22,14 @@ services:
       - "TZ=Europe/Berlin"
     ports:
       - "25:25"
+    labels:
+      org.label-schema.group: "services"
 
 
   nginx-proxy:
     image: jwilder/nginx-proxy:alpine-0.7.0
     container_name: nginx-proxy
-    restart: always
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
@@ -35,12 +41,14 @@ services:
       - "nginx-ssl-certs:/etc/nginx/certs:ro"
       - "nginx-vhostd:/etc/nginx/vhost.d"
       - "/var/run/docker.sock:/tmp/docker.sock:ro"
+    labels:
+      org.label-schema.group: "proxies"
 
 
   nginx-letsencrypt:
     image: jrcs/letsencrypt-nginx-proxy-companion:v1.12.1
     container_name: nginx-letsencrypt
-    restart: always
+    restart: unless-stopped
     depends_on:
       - nginx-proxy
     volumes:
@@ -48,12 +56,14 @@ services:
       - "nginx-ssl-certs:/etc/nginx/certs"
       - "nginx-vhostd:/etc/nginx/vhost.d"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      org.label-schema.group: "proxies"
 
 
   nginx-public:
     image: nginx:1.17.2-alpine
     container_name: nginx-public
-    restart: always
+    restart: unless-stopped
     volumes:
       - "./nginx-public.conf:/etc/nginx/nginx.conf:ro"
       - "./index-public.html:/usr/share/nginx/html/index.html"
@@ -61,12 +71,14 @@ services:
       - "VIRTUAL_HOST=public.${DOMAIN_NAME}"
       - "LETSENCRYPT_HOST=public.${DOMAIN_NAME}"
       - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+    labels:
+      org.label-schema.group: "proxies"
 
 
   oauth2-proxy:
     image: a5huynh/oauth2_proxy@sha256:4a3cc343dde63325ebce980eda25f7458c343f94dac34089c7d0122158ab3119
     container_name: oauth2-proxy
-    restart: always
+    restart: unless-stopped
     command:
       - --authenticated-emails-file=/authenticated-emails.conf
       - --client-id=${OAUTH2_CLIENT_ID}
@@ -82,21 +94,25 @@ services:
       - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
     volumes:
       - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
+    labels:
+      org.label-schema.group: "proxies"
 
 
   nginx-private:
     image: nginx:1.17.2-alpine
     container_name: nginx-private
-    restart: always
+    restart: unless-stopped
     volumes:
       - "./nginx-private.conf:/etc/nginx/nginx.conf:ro"
       - "./index-private.html:/usr/share/nginx/html/index.html"
+    labels:
+      org.label-schema.group: "proxies"
 
 
   samba:
     image: dperson/samba@sha256:ea7268d6f3b39e1647f88578c700735568eba3fedf84d89c6e060dccb2ed2c78
     container_name: samba
-    restart: always
+    restart: unless-stopped
     entrypoint:
       - samba.sh
       # -u
@@ -123,12 +139,14 @@ services:
     volumes:
       # - "/mnt/backup1:/backup"
       - "/mnt/storage:/storage"
+    labels:
+      org.label-schema.group: "services"
 
 
   syncthing:
     image: linuxserver/syncthing:v1.5.0-ls34
     container_name: syncthing
-    restart: always
+    restart: unless-stopped
     network_mode: host
     environment:
       - "TZ=Europe/Berlin"
@@ -142,26 +160,15 @@ services:
       - "/mnt/storage/containers/syncthing/config:/config"
       - "/mnt/storage/containers/syncthing/data/self:/sync/self"
       - "/mnt/storage/containers/syncthing/data:/sync"
-
-
-  gmvault:
-    image: aubertg/gmvault-docker@sha256:7b6551419fa5e09ad3593755e17327f379b321a73d2b7438242c71ee10bb8578
-    container_name: gmvault
-    restart: always
-    environment:
-      - "GMVAULT_UID=1000"
-      - "GMVAULT_GID=1000"
-      - "GMVAULT_EMAIL_ADDRESS=${EMAIL_ADDRESS}"
-    volumes:
-      - "/mnt/storage/containers/gmvault/data:/data"
-      - "./ssmtp.conf:/etc/ssmtp/ssmtp.conf"
+    labels:
+      org.label-schema.group: "backups"
 
 
   plex:
     image: plexinc/pms-docker:1.19.3.2852-219a9974e
     container_name: plex
     hostname: babushka.engineroom.middlearth.lan
-    restart: always
+    restart: unless-stopped
     network_mode: host # only needed on first run/boot
     environment:
       - "ADVERTISE_IP=http://192.168.88.1:32400/"
@@ -193,12 +200,14 @@ services:
       - "/mnt/storage/media/videos/tv:/tv"
       - "/mnt/storage/media/videos/misc:/misc"
       - "/mnt/storage/media/videos/movies:/movies"
+    labels:
+      org.label-schema.group: "content"
 
 
   transmission:
     image: haugene/transmission-openvpn:2.14
     container_name: transmission
-    restart: always
+    restart: unless-stopped
     privileged: true
     environment:
       - "PUID=1000"
@@ -221,12 +230,14 @@ services:
       - "/mnt/storage/media/videos/sickrage:/sickrage"
       - "/mnt/storage/media/videos/tv:/tv"
       - "/etc/localtime:/etc/localtime:ro"
+    labels:
+      org.label-schema.group: "content"
 
 
   medusa:
     image: linuxserver/medusa:v0.3.16-ls50
     container_name: medusa
-    restart: always
+    restart: unless-stopped
     environment:
       - "PUID=1000"
       - "PGID=1000"
@@ -239,28 +250,14 @@ services:
       - "/mnt/storage/media/videos/sickrage:/sickrage"
       - "./post-processing.sh:/post-processing.sh"
       - "/mnt/storage/media/videos/tv:/tv"
-
-
-  couchpotato:
-    image: linuxserver/couchpotato:7260c12f-ls35
-    container_name: couchpotato
-    restart: always
-    environment:
-      - "PUID=1000"
-      - "PGID=1000"
-      - "TZ=Europe/Berlin"
-    ports:
-      - "5050:5050"
-    volumes:
-      - "/mnt/storage/containers/couchpotato/config:/config"
-      - "/mnt/storage/containers/couchpotato/downloads:/downloads"
-      - "/mnt/storage/media/videos/movies:/movies"
+    labels:
+      org.label-schema.group: "content"
 
 
   calibre-web:
     image: linuxserver/calibre-web:V0.6.4-ls27
     container_name: calibre-web
-    restart: always
+    restart: unless-stopped
     environment:
       - "PUID=1000"
       - "PGID=1000"
@@ -270,32 +267,14 @@ services:
     volumes:
       - "/mnt/storage/containers/calibre-web/config:/config"
       - "/mnt/storage/documents/ebooks/calibre-library:/books:ro"
-
-
-  netdata:
-    image: netdata/netdata:v1.18.1
-    container_name: netdata
-    restart: always
-    hostname: bastion.engineroom.cewood.xyz # set to fqdn of host
-    environment:
-      - "TZ=Europe/Berlin"
-    ports:
-      - "19999:19999"
-    cap_add:
-      - SYS_PTRACE
-    security_opt:
-      - apparmor:unconfined
-    volumes:
-      - "/etc/passwd:/host/etc/passwd:ro"
-      - "/etc/group:/host/etc/group:ro"
-      - "/proc:/host/proc:ro"
-      - "/sys:/host/sys:ro"
+    labels:
+      org.label-schema.group: "content"
 
 
   tautulli:
     image: tautulli/tautulli@sha256:3094c7e5758e82893e6a5ff948a5e6bba364c343939f54f78a1e7c75145b1d12
     container_name: tautulli
-    restart: always
+    restart: unless-stopped
     environment:
       - "PUID=1000"
       - "PGID=1000"
@@ -305,12 +284,14 @@ services:
     volumes:
       - "/mnt/storage/containers/tautulli/config:/config"
       - "/mnt/storage/containers/plex/config/Library/Application Support/Plex Media Server/Logs/:/plex_logs:ro"
+    labels:
+      org.label-schema.group: "content"
 
 
   unifi:
     image: "jacobalberty/unifi:6.0.28"
     container_name: unifi
-    restart: always
+    restart: unless-stopped
     ports:
       - "3478:3478/udp" # STUN
       - "6789:6789/tcp" # Speed test
@@ -321,6 +302,8 @@ services:
       - "10001:10001/udp" # AP discovery
     volumes:
       - "/mnt/storage/containers/unifi/data:/unifi"
+    labels:
+      org.label-schema.group: "services"
 
 
   filebrowser:
@@ -339,6 +322,23 @@ services:
     volumes:
       - "/mnt/storage:/srv/storage:ro"
       - "/mnt/backup:/srv/backup:ro"
+    labels:
+      org.label-schema.group: "backups"
+
+
+  mbsync:
+    image: cewood/mbsync:alpine_8da26a4
+    container_name: mbsync
+    working_dir: /workdir
+    environment:
+      - "TZ=Europe/Berlin"
+    volumes:
+      - "/mnt/storage/containers/mbsync/data:/workdir/data"
+      - "./mbsync/mbsyncrc:/workdir/.mbsyncrc"
+      - "./mbsync/crontab:/etc/crontab"
+    restart: unless-stopped
+    labels:
+      org.label-schema.group: "backups"
 
 
   moinmoin:
@@ -357,6 +357,8 @@ services:
       - "/mnt/storage/containers/moinmoin/data:/usr/local/share/moin/data"
       - "./wikiconfig.py:/usr/local/share/moin/wikiconfig.py"
       - "./wiki-logo.png:/usr/local/lib/python2.7/dist-packages/MoinMoin/web/static/htdocs/common/logo.png"
+    labels:
+      org.label-schema.group: "content"
 
 
   fava:
@@ -372,3 +374,136 @@ services:
       - "5000:5000"
     volumes:
       - "/mnt/storage/containers/syncthing/data/schrodinger/code/src/github.com/cewood/finances-ledger:/bean:ro"
+    labels:
+      org.label-schema.group: "content"
+
+
+  glances:
+    image: nicolargo/glances@sha256:48b1577cbb8b62bf760ee29822324fa4b970f7dcf5ae253ec8123f6adbfa930f
+    container_name: glances
+    restart: always
+    pid: host
+    environment:
+      - "UID=1000"
+      - "GID=1000"
+      - "TZ=Europe/Berlin"
+      - "GLANCES_OPT=-w"
+    ports:
+      - "61208:61208"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/mnt/storage:/mnt/storage:ro"
+      - "/mnt/backup:/mnt/backup:ro"
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  prometheus:
+    image: prom/prometheus:v2.23.0
+    container_name: prometheus
+    environment:
+      - "TZ=Europe/Berlin"
+    volumes:
+      - "./monitoring/prometheus:/etc/prometheus"
+      - "/mnt/storage/containers/prometheus/data:/prometheus"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  alertmanager:
+    image: prom/alertmanager:v0.21.0
+    container_name: alertmanager
+    volumes:
+      - "./monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml"
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  nodeexporter:
+    image: prom/node-exporter:v1.0.1
+    container_name: nodeexporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.38.4
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  grafana:
+    image: grafana/grafana:7.3.4
+    container_name: grafana
+    volumes:
+      - "/mnt/storage/containers/grafana/data:/var/lib/grafana"
+      - "./monitoring/dockprom/grafana/provisioning:/etc/grafana/provisioning"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  pushgateway:
+    image: prom/pushgateway:v1.3.0
+    container_name: pushgateway
+    restart: unless-stopped
+    expose:
+      - 9091
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"

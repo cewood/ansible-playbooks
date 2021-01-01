@@ -1,122 +1,90 @@
 ---
 # tasks file for local.docker-compose
-- name: "docker-compose folder"
+- name: "Create directories"
   file:
-    path: /root/docker-compose
+    path: "/root/{{ item.path }}"
     state: directory
-    owner: root
-    group: root
-    mode: 0750
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default(0750) }}"
+  with_items:
+    - path: docker-compose
+    - path: docker-compose/mbsync
+    - path: docker-compose/monitoring
+    - path: docker-compose/monitoring/alertmanager
+    - path: docker-compose/monitoring/prometheus
   tags:
     - tasks
     - docker
     - docker-compose
+    - directories
+    - monitoring
+    - backups
 
-- name: "authenticated-emails.conf"
-  copy:
-    content: "{{ email_address }}"
-    dest: /root/docker-compose/authenticated-emails.conf
-    owner: root
-    group: root
-    mode: 0444
+- name: "Checkout dockprom repository"
+  git:
+    repo: "https://github.com/stefanprodan/dockprom.git"
+    dest: /root/docker-compose/monitoring/dockprom
+    version: v3.23.2
   tags:
     - tasks
     - docker
     - docker-compose
-    - oauth2_proxy
+    - monitoring
 
-- name: "post-processing.sh"
-  copy:
-    src: files/post-processing.sh
-    dest: /root/docker-compose/post-processing.sh
-    owner: root
-    group: root
-    mode: 0755
-
-- name: "docker-compose .env"
+- name: "Template files"
   template:
-    src: templates/docker-compose.j2.env
-    dest: /root/docker-compose/.env
-    owner: root
-    group: root
-    mode: 0644
+    src: "templates/{{ item.src }}"
+    dest: "/root/docker-compose/{{ item.dest }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default(0644) }}"
+  with_items:
+    - src: authenticated-emails.conf.j2
+      dest: authenticated-emails.conf
+    - src: docker-compose.j2.env
+      dest: .env
+    - src: index-private.j2.html
+      dest: index-private.html
+    - src: index-public.j2.html
+      dest: index-public.html
+    - src: mbsync/mbsyncrc.j2
+      dest: mbsync/mbsyncrc
+    - src: monitoring/alertmanager/config.yml.j2
+      dest: monitoring/alertmanager/config.yml
+    - src: nginx-private.j2.conf
+      dest: nginx-private.conf
+    - src: nginx-public.j2.conf
+      dest: nginx-public.conf
+    - src: ssmtp.j2.conf
+      dest: ssmtp.conf
   tags:
     - tasks
     - docker
     - docker-compose
-
-- name: "docker-compose.yml"
-  copy:
-    src: files/docker-compose.yml
-    dest: /root/docker-compose/docker-compose.yml
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - tasks
-    - docker
-    - docker-compose
-
-- name: "nginx private index.html"
-  template:
-    src: templates/index-private.j2.html
-    dest: /root/docker-compose/index-private.html
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - tasks
-    - docker
-    - docker-compose
-
-- name: "nginx private config"
-  template:
-    src: templates/nginx-private.j2.conf
-    dest: /root/docker-compose/nginx-private.conf
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - tasks
-    - docker
-    - docker-compose
-    - private
+    - monitoring
+    - alertmanager
+    - mbsync
     - nginx
+    - ssmtp
 
-- name: "nginx public index.html"
-  template:
-    src: templates/index-public.j2.html
-    dest: /root/docker-compose/index-public.html
-    owner: root
-    group: root
-    mode: 0644
+- name: "Copy files"
+  copy:
+    src: "files/{{ item.src }}"
+    dest: "/root/docker-compose/{{ item.dst | default(item.src) }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode | default(0644) }}"
+  with_items:
+    - src: docker-compose.yml
+    - src: mbsync/crontab
+    - src: monitoring/prometheus/alert.rules
+    - src: monitoring/prometheus/prometheus.yml
+    - src: post-processing.sh
+      mode: "0755"
   tags:
     - tasks
     - docker
     - docker-compose
-
-- name: "nginx public config"
-  template:
-    src: templates/nginx-public.j2.conf
-    dest: /root/docker-compose/nginx-public.conf
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - tasks
-    - docker
-    - docker-compose
-    - public
-    - nginx
-
-- name: "ssmtp.conf file"
-  template:
-    src: templates/ssmtp.j2.conf
-    dest: /root/docker-compose/ssmtp.conf
-    owner: root
-    group: root
-    mode: 0644
-  tags:
-    - tasks
-    - docker
-    - docker-compose
+    - monitoring
+    - prometheus

@@ -1,0 +1,47 @@
+# Define the IMAP4 Account name, opening a section for its parameters.
+IMAPAccount {{ mbsync_account }}
+#
+Host imap.gmail.com
+Port 993
+User {{ mbsync_account }}
+Pass {{ mbsync_password }}
+#
+# Select the connection security/encryption method
+SSLType IMAPS
+# The following line should work. If get certificate errors, uncomment the two following lines and read the "Troubleshooting" section.
+CertificateFile /etc/ssl/certs/ca-certificates.crt
+
+IMAPStore {{ mbsync_account }}-remote
+Account {{ mbsync_account }}
+
+MaildirStore {{ mbsync_account }}-local
+#
+# The on-disk folder naming style used for hierarchical mailboxes.
+#  Verbatim - Path/top/sub/subsub and Inbox/sub/subsub (this is the style you probably want to use)
+SubFolders Verbatim
+#
+# The location of the Store in the (server’s) file system.
+#  The trailing "/" is IMPORTANT!
+Path /workdir/data/{{ mbsync_account }}/
+#
+# The location of the INBOX. This is not relative to Path, but it is allowed to place the INBOX inside the Path.
+Inbox /workdir/data/{{ mbsync_account }}/Inbox
+
+Channel {{ mbsync_account }}
+Master :{{ mbsync_account }}-remote:
+Slave :{{ mbsync_account }}-local:
+#
+# The synchronization operation(s) to perform
+Sync Pull New ReNew Delete Flags
+#
+# Exclude everything under the internal [Gmail] folder, except the interesting folders
+Patterns * ![Gmail]* "[Gmail]/Sent Mail" "[Gmail]/Starred"
+#
+# Automatically create missing mailboxes, both locally and on the server
+Create Slave
+#
+# Propagate mailbox deletions to the Slave
+Remove Slave
+#
+# Save the synchronization state files in the relevant slave mailbox directory
+SyncState *

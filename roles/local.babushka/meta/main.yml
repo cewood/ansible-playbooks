@@ -40,8 +40,11 @@ dependencies:
 
   - { role: local.docker-compose,
       compose_project_name: "babuskha",
+      authenticated_emails: "{{ vault_authenticated_emails | trim }}",
       domain_name:          "{{ vault_domain_name | trim }}",
       email_address:        "{{ vault_email_address | trim }}",
+      mbsync_account:       "{{ vault_mbsync_account | trim }}",
+      mbsync_password:      "{{ vault_mbsync_password | trim }}",
       oauth2_client_id:     "{{ vault_oauth2_client_id | trim }}",
       oauth2_client_secret: "{{ vault_oauth2_client_secret | trim }}",
       oauth2_cookie_secret: "{{ vault_oauth2_cookie_secret | trim }}",
@@ -104,6 +107,7 @@ dependencies:
           ],
           backup_directives: [
             "backup	/mnt/storage/code	babushka/",
+            "backup	/mnt/storage/containers/mbsync/data	babushka/mbsync_data",
             "backup	/mnt/storage/containers/medusa/config	babushka/medusa_config",
             "backup	/mnt/storage/containers/plex/config	babushka/plex_config",
             "backup	/mnt/storage/containers/syncthing/config	babushka/syncthing_config",
