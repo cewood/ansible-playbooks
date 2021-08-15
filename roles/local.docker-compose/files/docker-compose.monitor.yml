@@ -1,0 +1,164 @@
+version: "3.4"
+networks:
+  monitor-net:
+    driver: bridge
+
+
+services:
+  glances:
+    image: nicolargo/glances@sha256:48b1577cbb8b62bf760ee29822324fa4b970f7dcf5ae253ec8123f6adbfa930f
+    container_name: glances
+    restart: always
+    pid: host
+    environment:
+      - "UID=1000"
+      - "GID=1000"
+      - "TZ=Europe/Berlin"
+      - "GLANCES_OPT=-w"
+    ports:
+      - "61208:61208"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/mnt/storage:/mnt/storage:ro"
+      - "/mnt/backup:/mnt/backup:ro"
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  prometheus:
+    image: prom/prometheus:v2.23.0
+    container_name: prometheus
+    environment:
+      - "TZ=Europe/Berlin"
+    volumes:
+      - "./monitoring/prometheus:/etc/prometheus"
+      - "/mnt/storage/containers/prometheus/data:/prometheus"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  alertmanager:
+    image: prom/alertmanager:v0.21.0
+    container_name: alertmanager
+    volumes:
+      - "./monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml"
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.19.0
+    container_name: blackbox-exporter
+    volumes:
+      - "./monitoring/blackbox-exporter/config.yml:/etc/blackbox-exporter/config.yml"
+    command:
+      - '--config.file=/etc/blackbox-exporter/config.yml'
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  speedtest-exporter:
+    image: cewood/prometheus-speedtest-exporter:v1.0.0
+    container_name: speedtest-exporter
+    restart: unless-stopped
+    ports:
+      - "9469:9469"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  nodeexporter:
+    image: prom/node-exporter:v1.0.1
+    container_name: nodeexporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.38.4
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /cgroup:/cgroup:ro
+    restart: unless-stopped
+    expose:
+      - 8080
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  grafana:
+    image: grafana/grafana:7.3.4
+    container_name: grafana
+    volumes:
+      - "/mnt/storage/containers/grafana/data:/var/lib/grafana"
+      - "./monitoring/dockprom/grafana/provisioning:/etc/grafana/provisioning"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"
+
+
+  pushgateway:
+    image: prom/pushgateway:v1.3.0
+    container_name: pushgateway
+    restart: unless-stopped
+    expose:
+      - 9091
+    networks:
+      - monitor-net
+    labels:
+      org.label-schema.group: "monitoring"

@@ -1,0 +1,182 @@
+version: "3.4"
+volumes:
+  acme:
+  nginx-conf:
+  nginx-html:
+  nginx-ssl-certs:
+  nginx-vhostd:
+
+
+services:
+  smtp:
+    image: namshi/smtp@sha256:aa63b8de68ce63dfcf848c56f3c1a16d81354f4accd4242a0086c57dd5a91d77
+    container_name: smtp
+    restart: unless-stopped
+    environment:
+      - "GMAIL_USER=${SMTP_GMAIL_USER}"
+      - "GMAIL_PASSWORD=${SMTP_GMAIL_PASSWORD}"
+      - "MAILNAME=${SMTP_MAILNAME}"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "25:25"
+    labels:
+      org.label-schema.group: "services"
+
+
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:0.9.2-alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+    volumes:
+      - "nginx-conf:/etc/nginx/conf.d"
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs:ro"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+    labels:
+      org.label-schema.group: "proxies"
+
+
+  nginx-letsencrypt:
+    image: nginxproxy/acme-companion:2.1.0
+    container_name: nginx-letsencrypt
+    restart: unless-stopped
+    depends_on:
+      - nginx-proxy
+    environment:
+      - "DEFAULT_EMAIL=${EMAIL_ADDRESS}"
+    volumes:
+      - "nginx-html:/usr/share/nginx/html"
+      - "nginx-ssl-certs:/etc/nginx/certs"
+      - "nginx-vhostd:/etc/nginx/vhost.d"
+      - "acme:/etc/acme.sh"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      org.label-schema.group: "proxies"
+
+
+  nginx-public:
+    image: nginx:1.17.2-alpine
+    container_name: nginx-public
+    restart: unless-stopped
+    volumes:
+      - "./nginx-public.conf:/etc/nginx/nginx.conf:ro"
+      - "./index-public.html:/usr/share/nginx/html/index.html"
+    environment:
+      - "VIRTUAL_HOST=public.${DOMAIN_NAME}"
+      - "LETSENCRYPT_HOST=public.${DOMAIN_NAME}"
+      - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+    labels:
+      org.label-schema.group: "proxies"
+
+
+  oauth2-proxy:
+    image: a5huynh/oauth2_proxy@sha256:4a3cc343dde63325ebce980eda25f7458c343f94dac34089c7d0122158ab3119
+    container_name: oauth2-proxy
+    restart: unless-stopped
+    command:
+      - --authenticated-emails-file=/authenticated-emails.conf
+      - --client-id=${OAUTH2_CLIENT_ID}
+      - --client-secret=${OAUTH2_CLIENT_SECRET}
+      - --cookie-secret=${OAUTH2_COOKIE_SECRET}
+      - --footer=private.${DOMAIN_NAME} is protected with oauth2
+      - --http-address=0.0.0.0:4180
+      - --upstream=http://nginx-private
+    environment:
+      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},moinmoin.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
+      - "VIRTUAL_PORT=4180"
+      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},moinmoin.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
+      - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
+    volumes:
+      - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
+    labels:
+      org.label-schema.group: "proxies"
+
+
+  nginx-private:
+    image: nginx:1.17.2-alpine
+    container_name: nginx-private
+    restart: unless-stopped
+    volumes:
+      - "./nginx-private.conf:/etc/nginx/nginx.conf:ro"
+      - "./index-private.html:/usr/share/nginx/html/index.html"
+    labels:
+      org.label-schema.group: "proxies"
+
+
+  samba:
+    image: dperson/samba@sha256:ea7268d6f3b39e1647f88578c700735568eba3fedf84d89c6e060dccb2ed2c78
+    container_name: samba
+    restart: unless-stopped
+    entrypoint:
+      - samba.sh
+      # -u
+      # - "<username;password>[;id;group-id/group-name]"
+      - -u
+      - "${SAMBA_USER1}"
+      - -u
+      - "${SAMBA_USER2}"
+      # -s
+      # - "<name;/path>[;browse;readonly;guest;users;admins;wl]"
+      - -s
+      - "storage;/storage;yes;yes;no;all;cewood;cewood"
+      # - -s
+      # - "backup;/backup;yes;yes;no;all;cewood;cewood"
+    environment:
+      - "NMBD=true"
+      - "WORKGROUP=middlearth"
+      - "TZ=Europe/Berlin"
+    ports:
+      - "139:139"
+      - "445:445"
+      - "137:137/udp"
+      - "138:138/udp"
+    volumes:
+      # - "/mnt/backup1:/backup"
+      - "/mnt/storage:/storage"
+    labels:
+      org.label-schema.group: "services"
+
+
+  unifi:
+    image: "jacobalberty/unifi:6.0.28"
+    container_name: unifi
+    restart: unless-stopped
+    ports:
+      - "3478:3478/udp" # STUN
+      - "6789:6789/tcp" # Speed test
+      - "8080:8080/tcp" # Device/ controller comm.
+      - "8443:8443/tcp" # Controller GUI/API as seen in a web browser
+      - "8880:8880/tcp" # HTTP portal redirection
+      - "8843:8843/tcp" # HTTPS portal redirection
+      - "10001:10001/udp" # AP discovery
+    volumes:
+      - "/mnt/storage/containers/unifi/data:/unifi"
+    labels:
+      org.label-schema.group: "services"
+
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:v5.8.1-buster
+    ports:
+      - "5353:53/tcp"
+      - "5353:53/udp"
+      - "8085:80/tcp"
+    environment:
+      - "TZ=Europe/Berlin"
+      - "WEBPASSWORD=password"
+    # Volumes store your data between container upgrades
+    volumes:
+      - '/mnt/storage/containers/pihole/config/:/etc/pihole/'
+      - '/mnt/storage/containers/pihole/data/:/etc/dnsmasq.d/'
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    #cap_add:
+    #  - NET_ADMIN
+    restart: unless-stopped

@@ -1,0 +1,39 @@
+version: "3.4"
+
+
+services:
+  moinmoin:
+    image: olavgg/moinmoin-wiki:1.9.10.1
+    container_name: moinmoin
+    restart: always
+    environment:
+      - "UID=1000"
+      - "GID=1000"
+      - "TZ=Europe/Berlin"
+      - "NOSSL=1"
+    ports:
+      - "8082:80"
+      - "4443:443"
+    volumes:
+      - "/mnt/storage/containers/moinmoin/data:/usr/local/share/moin/data"
+      - "./wikiconfig.py:/usr/local/share/moin/wikiconfig.py"
+      - "./wiki-logo.png:/usr/local/lib/python2.7/dist-packages/MoinMoin/web/static/htdocs/common/logo.png"
+    labels:
+      org.label-schema.group: "content"
+
+
+  fava:
+    image: yegle/fava:version-1.15
+    container_name: fava
+    restart: always
+    environment:
+      - "UID=1000"
+      - "GID=1000"
+      - "TZ=Europe/Berlin"
+      - "BEANCOUNT_FILE=/bean/main.bean"
+    ports:
+      - "5000:5000"
+    volumes:
+      - "/mnt/storage/containers/syncthing/data/schrodinger/code/src/github.com/cewood/finances-ledger:/bean:ro"
+    labels:
+      org.label-schema.group: "content"

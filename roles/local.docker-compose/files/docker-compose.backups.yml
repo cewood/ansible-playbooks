@@ -1,0 +1,58 @@
+version: "3.4"
+
+
+services:
+  syncthing:
+    image: linuxserver/syncthing:v1.5.0-ls34
+    container_name: syncthing
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - "TZ=Europe/Berlin"
+      - "PUID=1000"
+      - "PGID=1000"
+    ports:
+      - "8384:8384"
+      - "21027:21027/udp"
+      - "22000:22000"
+    volumes:
+      - "/mnt/storage/containers/syncthing/config:/config"
+      - "/mnt/storage/containers/syncthing/data/self:/sync/self"
+      - "/mnt/storage/containers/syncthing/data:/sync"
+    labels:
+      org.label-schema.group: "backups"
+
+
+  filebrowser:
+    image: filebrowser/filebrowser:v2.3.0
+    container_name: filebrowser
+    restart: always
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=Europe/Berlin"
+      - "FB_NOAUTH=1"
+      - "FB_PERM_DELETE=0"
+      - "FB_PERM_ADMIN=0"
+    ports:
+      - "8084:80"
+    volumes:
+      - "/mnt/storage:/srv/storage:ro"
+      - "/mnt/backup:/srv/backup:ro"
+    labels:
+      org.label-schema.group: "backups"
+
+
+  mbsync:
+    image: cewood/mbsync:alpine_8da26a4
+    container_name: mbsync
+    working_dir: /workdir
+    environment:
+      - "TZ=Europe/Berlin"
+    volumes:
+      - "/mnt/storage/containers/mbsync/data:/workdir/data"
+      - "./mbsync/mbsyncrc:/workdir/.mbsyncrc"
+      - "./mbsync/crontab:/etc/crontab"
+    restart: unless-stopped
+    labels:
+      org.label-schema.group: "backups"
