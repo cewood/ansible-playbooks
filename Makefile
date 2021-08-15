@@ -34,7 +34,7 @@ run-docker: docker-do-run
 
 .PHONY: lint
 lint:
-	ansible-lint $(or ${ARGS},${PLAYBOOKS})
+	ansible-lint -v $(or ${ARGS},${PLAYBOOKS})
 
 .PHONY: lint-docker
 lint-docker: docker-do-lint
@@ -61,7 +61,9 @@ vendor-docker: docker-do-vendor
 
 .PHONY: docker-do-%
 docker-do-%: .dockerimage
-	docker run --rm \
+	docker \
+	  run \
+	  --rm \
 	  ${DOCKER_INTERACTIVE} \
 	  -e ANSIBLE_KEEP_REMOTE_FILES=${ANSIBLE_KEEP_REMOTE_FILES} \
 	  -e HOME=/homedir \
