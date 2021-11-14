@@ -30,8 +30,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    labels:
-      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
     volumes:
       - "nginx-conf:/etc/nginx/conf.d"
       - "nginx-html:/usr/share/nginx/html"
@@ -49,6 +47,7 @@ services:
     depends_on:
       - nginx-proxy
     environment:
+      - "NGINX_PROXY_CONTAINER=nginx-proxy"
       - "DEFAULT_EMAIL=${EMAIL_ADDRESS}"
     volumes:
       - "nginx-html:/usr/share/nginx/html"
@@ -165,8 +164,8 @@ services:
     container_name: pihole
     image: pihole/pihole:v5.8.1-buster
     ports:
-      - "5353:53/tcp"
-      - "5353:53/udp"
+      - "53:53/tcp"
+      - "53:53/udp"
       - "8085:80/tcp"
     environment:
       - "TZ=Europe/Berlin"

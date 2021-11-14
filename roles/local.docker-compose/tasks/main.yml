@@ -25,17 +25,6 @@
     - monitoring
     - backups
 
-- name: "Checkout dockprom repository"
-  git:
-    repo: "https://github.com/stefanprodan/dockprom.git"
-    dest: /root/docker-compose/monitoring/dockprom
-    version: v3.23.2
-  tags:
-    - tasks
-    - docker
-    - docker-compose
-    - monitoring
-
 - name: "Template files"
   template:
     src: "templates/{{ item.src }}"
@@ -86,12 +75,14 @@
     - src: docker-compose.misc.yml
     - src: docker-compose.monitor.yml
     - src: mbsync/crontab
-    - src: monitoring/prometheus/alert.rules
-      owner: "65534"
-      group: "65534"
-    - src: monitoring/prometheus/prometheus.yml
-      owner: "65534"
-      group: "65534"
+    - src: monitoring/grafana
+      dst: monitoring
+      owner: 65534
+      group: 65534
+    - src: monitoring/prometheus
+      dst: monitoring
+      owner: 65534
+      group: 65534
     - src: post-processing.sh
       mode: "0755"
   tags:

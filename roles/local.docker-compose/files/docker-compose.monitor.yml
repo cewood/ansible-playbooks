@@ -138,7 +138,7 @@ services:
     container_name: grafana
     volumes:
       - "/mnt/storage/containers/grafana/data:/var/lib/grafana"
-      - "./monitoring/dockprom/grafana/provisioning:/etc/grafana/provisioning"
+      - "./monitoring/grafana/provisioning:/etc/grafana/provisioning"
     environment:
       - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}

@@ -1,6 +1,6 @@
 ANSIBLE_KEEP_REMOTE_FILES = $(or $(shell printenv ANSIBLE_KEEP_REMOTE_FILES),0)
 ANSIBLE_FLAGS             = $(or $(shell printenv ANSIBLE_FLAGS),--diff)
-DOCKER_INTERACTIVE        = $(if $(shell printenv GITHUB_ACTIONS),-t,-it)
+DOCKER_INTERACTIVE        = $(if $(shell printenv GITHUB_ACTIONS),-t,-t)
 GID                       = $(or $(shell printend GID), $(shell id -g))
 GIT_REVISION              = $(or $(shell printenv GIT_REVISION), $(shell git describe --match= --always --abbrev=7 --dirty))
 GROUP                     = $(or $(shell printend GROUP), $(shell id -g -n))
