@@ -1,1 +1,1 @@
-0 */4 * * * mbsync --all --verbose
+0 */4 * * * mbsync --all --verbose && echo "job_success_timestamp_seconds{instance=\"mbsync\"} $(date +%s)" | curl --data-binary @- http://pushgateway:9091/metrics/job/cron

@@ -1,11 +1,38 @@
+global:
+  opsgenie_api_key: {{ opsgenie_api_key }}
+  opsgenie_api_url: https://api.eu.opsgenie.com
 route:
-    receiver: 'slack'
-
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+  receiver: warn
+  routes:
+    - match:
+        severity: critical
+      receiver: critical
+    - match:
+        severity: warn
+      receiver: warn
+    - match:
+        severity: info
+      receiver: info
 receivers:
-    - name: 'slack'
-      slack_configs:
-          - send_resolved: true
-            text: "{{ '{{' }} .CommonAnnotations.description {{ '}}' }}"
-            username: 'Prometheus'
-            channel: '#<channel-name>'
-            api_url: 'https://hooks.slack.com/services/<webhook-id>'
+  - name: 'critical'
+    opsgenie_configs:
+      priority: P1
+      - responders:
+          - name: 'default'
+            type: 'team'
+  - name: 'warn'
+    opsgenie_configs:
+      priority: P3
+      - responders:
+          - name: 'default'
+            type: 'team'
+  - name: 'info'
+    opsgenie_configs:
+      priority: P5
+      - responders:
+          - name: 'default'
+            type: 'team'
