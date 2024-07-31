@@ -101,9 +101,9 @@ services:
       - --http-address=0.0.0.0:4180
       - --upstream=http://nginx-private
     environment:
-      - "VIRTUAL_HOST=*.private.${DOMAIN_NAME},private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
+      - "VIRTUAL_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
       - "VIRTUAL_PORT=4180"
-      - "LETSENCRYPT_HOST=*.private.${DOMAIN_NAME},private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
+      - "LETSENCRYPT_HOST=private.${DOMAIN_NAME},calibre.private.${DOMAIN_NAME},mikrotik.private.${DOMAIN_NAME},medusa.private.${DOMAIN_NAME},transmission.private.${DOMAIN_NAME},fava.private.${DOMAIN_NAME}"
       - "LETSENCRYPT_EMAIL=${EMAIL_ADDRESS}"
     volumes:
       - "./authenticated-emails.conf:/authenticated-emails.conf:ro"
@@ -157,7 +157,7 @@ services:
 
 
   syncthing:
-    image: syncthing/syncthing:1.22
+    image: syncthing/syncthing:1.27
     container_name: syncthing
     restart: unless-stopped
     environment:
@@ -176,27 +176,6 @@ services:
       - "/mnt/storage/containers/syncthing/config:/var/syncthing/config"
       - "/mnt/storage/containers/syncthing/data/self:/sync/self"
       - "/mnt/storage/containers/syncthing/data:/sync"
-    labels:
-      org.label-schema.group: "backups"
-
-
-  filebrowser:
-    image: filebrowser/filebrowser:v2.3.0
-    container_name: filebrowser
-    restart: always
-    environment:
-      - "PUID=1000"
-      - "PGID=1000"
-      - "TZ=Europe/Berlin"
-      - "FB_NOAUTH=1"
-      - "FB_PERM_DELETE=0"
-      - "FB_PERM_ADMIN=0"
-      - "VIRTUAL_HOST=filebrowser.engineroom.middlearth.lan"
-    ports:
-      - "8084:80"
-    volumes:
-      - "/mnt/storage:/srv/storage:ro"
-      - "/mnt/backup:/srv/backup:ro"
     labels:
       org.label-schema.group: "backups"
 
@@ -241,7 +220,7 @@ services:
   # ┛ ┗┗ ┗┻┗┗┻
 
   plex:
-    image: plexinc/pms-docker:1.32.1.6999-91e1e2e2c
+    image: plexinc/pms-docker:1.40.2.8395-c67dce28e
     container_name: plex
     hostname: babushka.engineroom.middlearth.lan
     restart: unless-stopped
@@ -283,7 +262,7 @@ services:
 
 
   transmission:
-    image: haugene/transmission-openvpn:5.0.2
+    image: haugene/transmission-openvpn:5.3.1
     container_name: transmission
     restart: unless-stopped
     privileged: true
@@ -315,7 +294,7 @@ services:
 
 
   medusa:
-    image: linuxserver/medusa:1.0.13
+    image: linuxserver/medusa:1.0.21
     container_name: medusa
     restart: unless-stopped
     environment:
@@ -336,7 +315,7 @@ services:
 
 
   calibre-web:
-    image: linuxserver/calibre-web:V0.6.4-ls27
+    image: linuxserver/calibre-web:V0.6.21
     container_name: calibre-web
     restart: unless-stopped
     environment:
@@ -349,24 +328,6 @@ services:
     volumes:
       - "/mnt/storage/containers/calibre-web/config:/config"
       - "/mnt/storage/documents/ebooks/calibre-library:/books:ro"
-    labels:
-      org.label-schema.group: "content"
-
-
-  tautulli:
-    image: tautulli/tautulli@sha256:52cb174b3efb358216e253ef6fccbf2436fa03bfe950cfd4959a98a25851f343
-    container_name: tautulli
-    restart: unless-stopped
-    environment:
-      - "PUID=1000"
-      - "PGID=1000"
-      - "TZ=Europe/Berlin"
-      - "VIRTUAL_HOST=tautulli.engineroom.middlearth.lan"
-    ports:
-      - "8181:8181"
-    volumes:
-      - "/mnt/storage/containers/tautulli/config:/config"
-      - "/mnt/storage/containers/plex/config/Library/Application Support/Plex Media Server/Logs/:/plex_logs:ro"
     labels:
       org.label-schema.group: "content"
 
@@ -413,27 +374,6 @@ services:
   # ┃┃┃┏┓┏┓┓╋┏┓┏┓┓┏┓┏┓
   # ┛ ┗┗┛┛┗┗┗┗┛┛ ┗┛┗┗┫
   #                  ┛
-
-  glances:
-    image: nicolargo/glances@sha256:48b1577cbb8b62bf760ee29822324fa4b970f7dcf5ae253ec8123f6adbfa930f
-    container_name: glances
-    restart: always
-    pid: host
-    environment:
-      - "UID=1000"
-      - "GID=1000"
-      - "TZ=Europe/Berlin"
-      - "GLANCES_OPT=-w"
-      - "VIRTUAL_HOST=glances.engineroom.middlearth.lan"
-    ports:
-      - "61208:61208"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "/mnt/storage:/mnt/storage:ro"
-      - "/mnt/backup:/mnt/backup:ro"
-    labels:
-      org.label-schema.group: "monitoring"
-
 
   prometheus:
     image: prom/prometheus:v2.23.0
