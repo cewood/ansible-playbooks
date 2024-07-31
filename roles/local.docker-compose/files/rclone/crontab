@@ -1,0 +1,1 @@
+0 */4 * * * rclone sync gdrive: /data/ && echo "job_success_timestamp_seconds{instance=\"rclone\"} $(date +%s)" | curl --data-binary @- http://pushgateway:9091/metrics/job/cron

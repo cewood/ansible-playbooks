@@ -53,6 +53,8 @@
       dest: nginx-private.conf
     - src: nginx-public.j2.conf
       dest: nginx-public.conf
+    - src: rclone/rclone.conf.j2
+      dest: rclone/rclone.conf
     - src: ssmtp.j2.conf
       dest: ssmtp.conf
   tags:
@@ -93,10 +95,6 @@
       group: "1000"
       mode: "0660"
     - src: rclone/crontab
-    - src: rclone/rclone.conf
-      owner: "1000"
-      group: "1000"
-      mode: "0660"
     - src: post-processing.sh
       mode: "0755"
   tags:
